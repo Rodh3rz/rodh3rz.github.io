@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#060a12">
+<title>ScanDoc Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script>var Module={onRuntimeInitialized:function(){window.cvReady=true;window.dispatchEvent(new Event('cv-ready'));}}</script>
+<script async src="https://docs.opencv.org/4.8.0/opencv.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#060a12; --bg2:#0b1120; --card:#111827;
+  --border:rgba(255,255,255,0.08);
+  --blue:#2563eb; --blue2:#3b82f6;
+  --green:#16a34a; --red:#dc2626;
+  --text:#f1f5f9; --muted:rgba(241,245,249,0.45);
+  --faint:rgba(241,245,249,0.07);
+  --r:18px;
+  --st:env(safe-area-inset-top,24px);
+  --sb:env(safe-area-inset-bottom,20px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);}
+
+.scr{position:fixed;inset:0;display:none;flex-direction:column;}
+.scr.on{display:flex;}
+
+/* ══ PERMISOS ══ */
+#s-perm{
+  background:radial-gradient(ellipse at 50% -5%, rgba(37,99,235,0.3) 0%, transparent 60%), var(--bg);
+  align-items:center; justify-content:center;
+  padding:calc(var(--st)+20px) 24px calc(var(--sb)+24px);
+  gap:0;
+}
+.perm-logo{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,var(--blue),#1d4ed8);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 32px rgba(37,99,235,0.45);margin-bottom:20px;}
+.perm-app{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:6px;text-align:center;}
+.perm-tagline{font-size:14px;color:var(--muted);text-align:center;line-height:1.6;max-width:280px;margin-bottom:32px;}
+
+/* Permission cards */
+.perm-list{width:100%;display:flex;flex-direction:column;gap:12px;margin-bottom:28px;}
+.perm-item{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;transition:border-color .3s;}
+.perm-item.granted{border-color:rgba(22,163,74,0.5);}
+.perm-item.denied{border-color:rgba(220,38,38,0.5);}
+.perm-ico{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.perm-ico.blue{background:rgba(37,99,235,0.15);}
+.perm-ico.green{background:rgba(22,163,74,0.15);}
+.perm-text{flex:1;}
+.perm-text h3{font-size:15px;font-weight:600;}
+.perm-text p{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4;}
+.perm-badge{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;transition:all .3s;}
+.perm-badge.ok{background:var(--green);border-color:var(--green);}
+.perm-badge.no{background:var(--red);border-color:var(--red);}
+.perm-badge.wait{background:rgba(245,158,11,0.2);border-color:rgba(245,158,11,0.4);}
+
+/* BIG PERMISSION BUTTON */
+.btn-perm-main{
+  width:100%; padding:20px;
+  border:none; border-radius:var(--r);
+  background:linear-gradient(135deg,var(--blue),#1d4ed8);
+  color:#fff; font-family:'Syne',sans-serif;
+  font-size:17px; font-weight:800;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  box-shadow:0 10px 30px rgba(37,99,235,0.5);
+  letter-spacing:-0.3px;
+  margin-bottom:14px;
+  transition:transform .1s, box-shadow .1s;
+  -webkit-appearance:none;
+}
+.btn-perm-main:active{transform:scale(0.97);box-shadow:0 6px 18px rgba(37,99,235,0.4);}
+.btn-perm-main:disabled{opacity:.5;}
+
+.perm-hint{font-size:12px;color:var(--muted);text-align:center;line-height:1.7;max-width:290px;}
+.perm-hint strong{color:rgba(255,255,255,0.7);}
+
+/* Denied help box */
+.denied-box{
+  display:none; width:100%;
+  background:rgba(220,38,38,0.08);
+  border:1px solid rgba(220,38,38,0.25);
+  border-radius:14px; padding:14px 16px;
+  margin-bottom:16px;
+}
+.denied-box.show{display:block;}
+.denied-box h4{font-size:13px;font-weight:600;color:#fca5a5;margin-bottom:8px;}
+.denied-steps{list-style:none;}
+.denied-steps li{font-size:12px;color:rgba(255,255,255,0.55);line-height:1.9;}
+.denied-steps li::before{content:"→ ";color:var(--blue2);}
+
+/* ══ HOME ══ */
+#s-home{
+  background:radial-gradient(ellipse at 70% 0%,rgba(37,99,235,0.15) 0%,transparent 55%),var(--bg);
+  justify-content:space-between;
+  padding:calc(var(--st)+14px) 20px calc(var(--sb)+22px);
+}
+.home-hdr{display:flex;align-items:center;gap:10px;}
+.home-logo{width:38px;height:38px;border-radius:11px;background:var(--blue);display:flex;align-items:center;justify-content:center;}
+.home-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
+.cv-pill{margin-left:auto;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:600;background:rgba(37,99,235,0.1);color:rgba(99,155,250,0.6);border:1px solid rgba(37,99,235,0.2);transition:all .4s;}
+.cv-pill.rdy{background:rgba(22,163,74,0.12);color:#4ade80;border-color:rgba(22,163,74,0.3);}
+.mode-sec h4{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mc{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:16px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:7px;transition:border-color .2s,background .2s;}
+.mc:active{background:#1a2540;}
+.mc.active{border-color:var(--blue2);background:rgba(37,99,235,0.1);}
+.mc .ico{font-size:28px;}
+.mc .lbl{font-size:13px;font-weight:600;font-family:'Syne',sans-serif;}
+.mc .sub{font-size:10px;color:var(--muted);text-align:center;}
+.home-btns{display:flex;flex-direction:column;gap:10px;}
+.btn-scan{width:100%;padding:17px;border:none;border-radius:var(--r);background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 26px rgba(37,99,235,0.42);}
+.btn-gal{width:100%;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--faint);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Sans',sans-serif;}
+.gbadge{background:var(--blue);color:#fff;font-size:9px;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+
+/* ══ CAMERA ══ */
+#s-cam{background:#000;}
+#vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+#live-cv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:60;transition:opacity .12s;}
+.flash.on{opacity:1;}
+.cam-top{position:absolute;top:0;left:0;right:0;padding:calc(var(--st)+8px) 16px 14px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);z-index:10;}
+.cam-bot{position:absolute;bottom:0;left:0;right:0;padding:14px 30px calc(var(--sb)+16px);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);z-index:10;}
+.ibtn{width:46px;height:46px;border-radius:14px;background:rgba(0,0,0,.5);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.chip{background:rgba(0,0,0,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:7px 16px;font-size:12px;color:rgba(255,255,255,.85);font-weight:500;transition:all .25s;}
+.chip.det{background:rgba(37,99,235,.45);border-color:rgba(37,99,235,.7);color:#93c5fd;}
+.shutter{width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,255,255,.9);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.sh-in{width:62px;height:62px;border-radius:50%;background:#fff;transition:transform .1s,opacity .1s;}
+.shutter:active .sh-in{transform:scale(.84);opacity:.7;}
+.thumb{width:52px;height:52px;border-radius:12px;border:2px solid rgba(255,255,255,.35);overflow:hidden;cursor:pointer;background:rgba(255,255,255,.1);position:relative;}
+.thumb img{width:100%;height:100%;object-fit:cover;}
+.tbadge{position:absolute;top:-3px;right:-3px;background:var(--blue);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+
+/* ══ CROP ══ */
+#s-crop{background:#0d1117;}
+.crop-top{padding:calc(var(--st)+4px) 14px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
+.crop-tit{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.crop-sub{font-size:11px;color:var(--muted);text-align:center;}
+.auto-btn{padding:8px 16px;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.35);border-radius:10px;color:#93c5fd;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.crop-wrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px;}
+#crop-cv{touch-action:none;display:block;max-width:100%;max-height:100%;}
+.crop-bot{padding:12px 14px calc(var(--sb)+12px);display:flex;gap:10px;border-top:1px solid var(--border);flex-shrink:0;}
+.btn-back{flex:1;padding:15px;border:1px solid var(--border);border-radius:14px;background:var(--faint);color:var(--muted);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-apply{flex:2.5;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 18px rgba(37,99,235,.35);}
+
+/* ══ RESULT ══ */
+#s-result{background:var(--bg);}
+.result-top{padding:calc(var(--st)+4px) 14px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
+.result-tit{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.res-img-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-height:0;}
+#res-img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;box-shadow:0 18px 56px rgba(0,0,0,.8);}
+.fmt-bar{padding:10px 14px;border-top:1px solid var(--border);flex-shrink:0;}
+.fmt-bar-lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.fmt-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.fmt-row::-webkit-scrollbar{display:none;}
+.fmt-chip{padding:9px 16px;border-radius:20px;border:1.5px solid var(--border);background:var(--faint);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0;font-family:'DM Sans',sans-serif;}
+.fmt-chip.sel{background:rgba(37,99,235,.15);border-color:var(--blue2);color:var(--blue2);}
+.res-bot{padding:10px 14px calc(var(--sb)+12px);display:flex;gap:10px;flex-shrink:0;}
+.btn-new{flex:1;padding:15px;border:1px solid var(--border);border-radius:14px;background:var(--faint);color:var(--muted);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-dl{flex:2.5;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--green),#15803d);color:#fff;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 18px rgba(22,163,74,.3);}
+
+/* ══ GALLERY ══ */
+#s-gal{background:var(--bg);}
+.gal-top{padding:calc(var(--st)+4px) 14px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
+.gal-tit{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;}
+.gal-body{flex:1;overflow-y:auto;padding:10px 12px;}
+.gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.gal-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;}
+.gal-img{aspect-ratio:3/4;overflow:hidden;background:#1a1a2e;}
+.gal-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.gal-info{padding:9px 10px 11px;}
+.gal-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gal-date{font-size:10px;color:var(--muted);margin-top:2px;}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);padding:40px;text-align:center;}
+.empty .eico{font-size:52px;}
+.empty h3{font-size:16px;font-weight:600;color:rgba(255,255,255,.5);}
+
+/* ══ VIEW ══ */
+#s-view{background:#000;}
+.view-top{padding:calc(var(--st)+4px) 14px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.view-name{font-size:14px;font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.view-img-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:12px;min-height:0;}
+.view-img-wrap img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 16px 48px rgba(0,0,0,.9);}
+.view-bot{padding:10px 14px calc(var(--sb)+12px);display:flex;gap:8px;border-top:1px solid var(--border);flex-shrink:0;}
+
+/* ══ LOADER ══ */
+#loader{position:fixed;inset:0;background:rgba(6,10,18,.92);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(8px);}
+#loader.on{display:flex;}
+.spin{width:44px;height:44px;border:3px solid rgba(255,255,255,.08);border-top-color:var(--blue2);border-radius:50%;animation:sp .75s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.load-txt{font-size:14px;color:var(--muted);font-weight:500;}
+
+canvas{display:none;}
+canvas#live-cv,canvas#crop-cv{display:block;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     PANTALLA DE PERMISOS
+══════════════════════════════ -->
+<div class="scr on" id="s-perm">
+
+  <div class="perm-logo">
+    <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <rect x="6" y="4" width="18" height="24" rx="3" fill="white" fill-opacity="0.2" stroke="white" stroke-width="1.5"/>
+      <rect x="12" y="10" width="18" height="24" rx="3" fill="white" fill-opacity="0.07" stroke="white" stroke-width="1.2"/>
+      <path d="M10 17h9M10 21h12M10 25h7" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="perm-app">ScanDoc Pro</div>
+  <div class="perm-tagline">Para escanear documentos la app necesita acceso a tu cámara y almacenamiento.</div>
+
+  <div class="perm-list">
+    <div class="perm-item" id="pi-cam">
+      <div class="perm-ico blue">📷</div>
+      <div class="perm-text">
+        <h3>Cámara</h3>
+        <p>Para capturar documentos, tarjetas y pizarras</p>
+      </div>
+      <div class="perm-badge" id="pb-cam">?</div>
+    </div>
+    <div class="perm-item" id="pi-stor">
+      <div class="perm-ico green">🗂️</div>
+      <div class="perm-text">
+        <h3>Almacenamiento</h3>
+        <p>Para guardar documentos en PDF, JPG, PNG y más</p>
+      </div>
+      <div class="perm-badge" id="pb-stor">?</div>
+    </div>
+  </div>
+
+  <!-- Caja de ayuda si se deniega (solo se muestra si niegan) -->
+  <div class="denied-box" id="denied-box">
+    <h4>⚠️ Permiso denegado — Cómo activarlo:</h4>
+    <ul class="denied-steps">
+      <li>En Chrome Android, toca los <strong>3 puntos ⋮</strong> arriba a la derecha</li>
+      <li>Ve a <strong>Configuración → Configuración del sitio</strong></li>
+      <li>Toca <strong>Cámara</strong> y activa el permiso para esta página</li>
+      <li>Vuelve y toca el botón de abajo</li>
+    </ul>
+  </div>
+
+  <!-- BOTÓN PRINCIPAL DE PERMISO -->
+  <button class="btn-perm-main" id="btn-perm" onclick="pedirPermisos()">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/>
+    </svg>
+    Dar permisos y continuar
+  </button>
+
+  <div class="perm-hint">
+    Al tocar el botón aparecerá un <strong>cuadro del sistema Android</strong> pidiendo permiso de cámara. Toca <strong>"Permitir"</strong>.
+  </div>
+
+</div>
+
+<!-- ══ HOME ══ -->
+<div class="scr" id="s-home">
+  <div class="home-hdr">
+    <div class="home-logo">
+      <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
+        <rect x="4" y="2" width="14" height="19" rx="2.5" fill="white" fill-opacity="0.3" stroke="white" stroke-width="1.5"/>
+        <rect x="9" y="7" width="14" height="19" rx="2.5" fill="white" fill-opacity="0.1" stroke="white" stroke-width="1.2"/>
+        <path d="M8 12h7M8 15h9M8 18h5" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="home-name">ScanDoc Pro</div>
+    <div class="cv-pill" id="cv-pill">Cargando…</div>
+  </div>
+
+  <div class="mode-sec">
+    <h4>Tipo de escaneo</h4>
+    <div class="mode-grid">
+      <div class="mc active" onclick="setMode('doc',this)"><span class="ico">📄</span><span class="lbl">Documento</span><span class="sub">A4, facturas, cartas</span></div>
+      <div class="mc" onclick="setMode('card',this)"><span class="ico">💳</span><span class="lbl">Tarjeta</span><span class="sub">ID, crédito, visita</span></div>
+      <div class="mc" onclick="setMode('wb',this)"><span class="ico">📋</span><span class="lbl">Pizarra</span><span class="sub">Notas, diagramas</span></div>
+      <div class="mc" onclick="setMode('photo',this)"><span class="ico">🖼️</span><span class="lbl">Foto</span><span class="sub">Cualquier imagen</span></div>
+    </div>
+  </div>
+
+  <div class="home-btns">
+    <button class="btn-scan" onclick="abrirCamara()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="white" stroke-width="1.8" fill="none"/><circle cx="12" cy="13" r="4" stroke="white" stroke-width="1.8"/></svg>
+      Escanear
+    </button>
+    <button class="btn-gal" id="btn-gal" style="display:none" onclick="abrirGaleria()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/></svg>
+      Mis documentos
+      <span class="gbadge" id="gal-count">0</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══ CAMARA ══ -->
+<div class="scr" id="s-cam">
+  <video id="vid" autoplay playsinline muted></video>
+  <canvas id="live-cv"></canvas>
+  <div class="flash" id="flash"></div>
+  <div class="cam-top">
+    <button class="ibtn" onclick="goHome()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="chip" id="cam-chip">Apunta al documento</div>
+    <button class="ibtn" onclick="flipCam()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M1 4v6h6M23 20v-6h-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+  <div class="cam-bot">
+    <div class="thumb" id="cam-thumb" style="opacity:0;pointer-events:none" onclick="abrirGaleria()">
+      <span class="tbadge" id="cam-tbadge">0</span>
+    </div>
+    <button class="shutter" id="shutter" onclick="snap()">
+      <div class="sh-in"></div>
+    </button>
+    <div style="width:52px"></div>
+  </div>
+</div>
+
+<!-- ══ CROP ══ -->
+<div class="scr" id="s-crop">
+  <div class="crop-top">
+    <button class="ibtn" onclick="retake()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div style="text-align:center">
+      <div class="crop-tit">Ajustar recorte</div>
+      <div class="crop-sub">Arrastra las esquinas • Auto para detectar</div>
+    </div>
+    <button class="auto-btn" onclick="autoDetect()">Auto ✨</button>
+  </div>
+  <div class="crop-wrap" id="crop-wrap">
+    <canvas id="crop-cv"></canvas>
+  </div>
+  <div class="crop-bot">
+    <button class="btn-back" onclick="retake()">↩ Repetir</button>
+    <button class="btn-apply" onclick="aplicarRecorte()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Recortar y Guardar
+    </button>
+  </div>
+</div>
+
+<!-- ══ RESULTADO ══ -->
+<div class="scr" id="s-result">
+  <div class="result-top">
+    <button class="ibtn" onclick="goHome()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="result-tit">Documento listo ✓</div>
+    <button class="ibtn" style="background:rgba(37,99,235,.2);border-color:rgba(37,99,235,.4)" onclick="abrirCamara()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#93c5fd" stroke-width="2.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="res-img-wrap"><img id="res-img" src="" alt=""></div>
+  <div class="fmt-bar">
+    <div class="fmt-bar-lbl">Formato</div>
+    <div class="fmt-row">
+      <div class="fmt-chip sel" data-fmt="pdf" onclick="pickFmt(this)">📄 PDF</div>
+      <div class="fmt-chip" data-fmt="jpg" onclick="pickFmt(this)">🖼️ JPG</div>
+      <div class="fmt-chip" data-fmt="png" onclick="pickFmt(this)">🎨 PNG</div>
+      <div class="fmt-chip" data-fmt="webp" onclick="pickFmt(this)">⚡ WEBP</div>
+      <div class="fmt-chip" data-fmt="bmp" onclick="pickFmt(this)">🗂️ BMP</div>
+    </div>
+  </div>
+  <div class="res-bot">
+    <button class="btn-new" onclick="abrirCamara()">📷 Nuevo</button>
+    <button class="btn-dl" onclick="guardarDoc()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="dl-lbl">Guardar PDF</span>
+    </button>
+  </div>
+</div>
+
+<!-- ══ GALERÍA ══ -->
+<div class="scr" id="s-gal">
+  <div class="gal-top">
+    <button class="ibtn" onclick="goHome()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <span class="gal-tit">Mis Documentos</span>
+    <button class="ibtn" style="background:rgba(37,99,235,.2);border-color:rgba(37,99,235,.4)" onclick="abrirCamara()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#93c5fd" stroke-width="2.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="gal-body" id="gal-body"></div>
+</div>
+
+<!-- ══ VER DOC ══ -->
+<div class="scr" id="s-view">
+  <div class="view-top">
+    <button class="ibtn" onclick="show('s-gal')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="view-name" id="view-name">Documento</div>
+    <button class="ibtn" style="background:rgba(220,38,38,.12);border-color:rgba(220,38,38,.25)" onclick="borrarDoc()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="#f87171" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="view-img-wrap"><img id="view-img" src="" alt=""></div>
+  <div class="view-bot">
+    <button class="btn-back" style="flex:1" onclick="compartirDoc()">📤 Compartir</button>
+    <button class="btn-apply" style="flex:2" onclick="descargarViewDoc()">⬇️ Descargar</button>
+  </div>
+</div>
+
+<!-- LOADER -->
+<div id="loader"><div class="spin"></div><div class="load-txt" id="load-txt">Procesando…</div></div>
+
+<canvas id="cap-cv"></canvas>
+<canvas id="out-cv"></canvas>
+
+<script>
+// ══════════════════════
+// ESTADO
+// ══════════════════════
+let docs = [];
+try { docs = JSON.parse(localStorage.getItem('sd4')||'[]'); } catch(e){}
+let camStream=null, facing='environment', mode='doc';
+let rawUrl=null, cropImg=null, pts=null, dragging=-1, cScale=1;
+let selFmt='pdf', viewId=null, liveT=null;
+
+// ══════════════════════
+// OPENCV
+// ══════════════════════
+window.addEventListener('cv-ready',()=>{
+  const p=document.getElementById('cv-pill');
+  p.textContent='✓ Detección activa'; p.classList.add('rdy');
+});
+
+// ══════════════════════
+// PANTALLA DE PERMISOS
+// Funciona en Android:
+// getUserMedia() dispara
+// el diálogo nativo del
+// sistema operativo.
+// ══════════════════════
+async function pedirPermisos() {
+  const btn = document.getElementById('btn-perm');
+  btn.disabled = true;
+  btn.textContent = '⏳ Esperando permiso…';
+
+  try {
+    // Esto dispara el cuadro nativo de Android
+    const s = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false
+    });
+    // ✅ Permiso concedido
+    s.getTracks().forEach(t => t.stop());
+
+    setBadge('pb-cam', 'pi-cam', true);
+    setBadge('pb-stor', 'pi-stor', true);
+
+    btn.textContent = '✅ ¡Permisos concedidos!';
+    btn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
+
+    // Esperar un momento y pasar al home
+    await sleep(700);
+    show('s-home');
+    actualizarHome();
+
+  } catch(err) {
+    // ❌ Usuario negó o no hay cámara
+    setBadge('pb-cam', 'pi-cam', false);
+    document.getElementById('denied-box').classList.add('show');
+
+    btn.disabled = false;
+    btn.textContent = '🔄 Reintentar permiso';
+    btn.style.background = 'linear-gradient(135deg,#dc2626,#b91c1c)';
+  }
+}
+
+function setBadge(badgeId, itemId, ok) {
+  const b = document.getElementById(badgeId);
+  const i = document.getElementById(itemId);
+  b.classList.remove('ok','no','wait');
+  i.classList.remove('granted','denied');
+  b.classList.add(ok ? 'ok' : 'no');
+  i.classList.add(ok ? 'granted' : 'denied');
+  b.textContent = ok ? '✓' : '✗';
+}
+
+// Verificar si ya tiene permiso al cargar
+window.addEventListener('load', async () => {
+  if (!navigator.mediaDevices) return;
+  try {
+    if (navigator.permissions) {
+      const r = await navigator.permissions.query({name:'camera'});
+      if (r.state === 'granted') {
+        setBadge('pb-cam','pi-cam',true);
+        setBadge('pb-stor','pi-stor',true);
+        show('s-home');
+        actualizarHome();
+      }
+    }
+  } catch(e) { /* silencioso */ }
+});
+
+// ══════════════════════
+// NAV
+// ══════════════════════
+function show(id){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+function goHome(){ pararCamara(); show('s-home'); actualizarHome(); }
+function retake(){ rawUrl=null; abrirCamara(); }
+function abrirGaleria(){ pararCamara(); renderGaleria(); show('s-gal'); }
+
+// ══════════════════════
+// HOME
+// ══════════════════════
+function setMode(m,el){
+  mode=m;
+  document.querySelectorAll('.mc').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+function actualizarHome(){
+  const b=document.getElementById('btn-gal');
+  b.style.display=docs.length>0?'flex':'none';
+  document.getElementById('gal-count').textContent=docs.length;
+}
+
+// ══════════════════════
+// CAMARA
+// ══════════════════════
+async function abrirCamara(){
+  show('s-cam');
+  pararCamara();
+  document.getElementById('shutter').disabled=true;
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video:{
+        facingMode:{ideal:facing},
+        width:{ideal:3840}, height:{ideal:2160},
+      },
+      audio:false
+    });
+    const v=document.getElementById('vid');
+    v.srcObject=camStream;
+    v.onloadedmetadata=()=>{
+      v.play();
+      document.getElementById('shutter').disabled=false;
+      actualizarThumb();
+      if(window.cvReady) iniciarLive();
+    };
+  } catch(e) {
+    // Si se deniega aquí, volver a permisos
+    document.getElementById('denied-box').classList.add('show');
+    document.getElementById('btn-perm').disabled=false;
+    document.getElementById('btn-perm').textContent='🔄 Reintentar permiso';
+    document.getElementById('btn-perm').style.background='linear-gradient(135deg,#dc2626,#b91c1c)';
+    show('s-perm');
+  }
+}
+
+function pararCamara(){
+  pararLive();
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+}
+
+async function flipCam(){
+  facing=facing==='environment'?'user':'environment';
+  await abrirCamara();
+}
+
+function iniciarLive(){
+  pararLive();
+  const v=document.getElementById('vid');
+  const lc=document.getElementById('live-cv');
+  liveT=setInterval(()=>{
+    if(!v.videoWidth)return;
+    lc.width=v.videoWidth; lc.height=v.videoHeight;
+    const ctx=lc.getContext('2d');
+    ctx.drawImage(v,0,0);
+    if(!window.cvReady||!window.cv){ctx.clearRect(0,0,lc.width,lc.height);return;}
+    try{
+      const found=encontrarDoc(lc);
+      ctx.clearRect(0,0,lc.width,lc.height);
+      const chip=document.getElementById('cam-chip');
+      if(found){
+        dibujarLive(ctx,found,lc.width,lc.height);
+        chip.textContent='✓ Documento detectado'; chip.classList.add('det');
+      } else {
+        chip.textContent='Apunta al documento'; chip.classList.remove('det');
+      }
+    }catch(e){}
+  },250);
+}
+function pararLive(){if(liveT){clearInterval(liveT);liveT=null;}}
+
+function dibujarLive(ctx,p,w,h){
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,w,h);
+  ctx.globalCompositeOperation='destination-out';
+  ctx.beginPath(); ctx.moveTo(p[0].x,p[0].y);
+  p.slice(1).forEach(q=>ctx.lineTo(q.x,q.y));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  ctx.strokeStyle='#3b82f6'; ctx.lineWidth=3;
+  ctx.shadowColor='#60a5fa'; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.moveTo(p[0].x,p[0].y);
+  p.forEach(q=>ctx.lineTo(q.x,q.y));
+  ctx.closePath(); ctx.stroke(); ctx.shadowBlur=0;
+  p.forEach(q=>{
+    ctx.beginPath(); ctx.arc(q.x,q.y,7,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2; ctx.stroke();
+  });
+}
+
+function snap(){
+  const v=document.getElementById('vid');
+  if(!v.videoWidth)return;
+  const f=document.getElementById('flash');
+  f.classList.add('on'); setTimeout(()=>f.classList.remove('on'),160);
+  const c=document.getElementById('cap-cv');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  rawUrl=c.toDataURL('image/jpeg',0.97);
+  pararCamara();
+  abrirRecorte();
+}
+
+function actualizarThumb(){
+  const t=document.getElementById('cam-thumb');
+  const b=document.getElementById('cam-tbadge');
+  if(docs.length>0){
+    t.style.opacity='1'; t.style.pointerEvents='auto';
+    let img=t.querySelector('img');
+    if(!img){img=document.createElement('img');t.appendChild(img);}
+    img.src=docs[0].url; b.textContent=docs.length;
+  }else{t.style.opacity='0';t.style.pointerEvents='none';}
+}
+
+// ══════════════════════
+// RECORTE
+// ══════════════════════
+function abrirRecorte(){
+  show('s-crop');
+  cropImg=new Image();
+  cropImg.onload=()=>{layoutCrop(); autoDetect();};
+  cropImg.src=rawUrl;
+}
+
+function layoutCrop(){
+  const wrap=document.getElementById('crop-wrap');
+  const cc=document.getElementById('crop-cv');
+  const wW=wrap.clientWidth, wH=wrap.clientHeight;
+  const iW=cropImg.naturalWidth, iH=cropImg.naturalHeight;
+  cScale=Math.min(wW/iW,wH/iH)*0.96;
+  cc.width=Math.round(iW*cScale); cc.height=Math.round(iH*cScale);
+  dibujarCrop();
+}
+
+function dibujarCrop(){
+  const cc=document.getElementById('crop-cv');
+  const ctx=cc.getContext('2d');
+  ctx.clearRect(0,0,cc.width,cc.height);
+  ctx.drawImage(cropImg,0,0,cc.width,cc.height);
+  if(!pts)return;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.48)'; ctx.fillRect(0,0,cc.width,cc.height);
+  ctx.globalCompositeOperation='destination-out';
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+  pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  ctx.strokeStyle='#3b82f6'; ctx.lineWidth=2.5;
+  ctx.shadowColor='#60a5fa'; ctx.shadowBlur=6;
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.closePath(); ctx.stroke(); ctx.shadowBlur=0;
+  ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  pts.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,20,0,Math.PI*2);
+    ctx.fillStyle='rgba(59,130,246,0.2)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(p.x,p.y,11,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.strokeStyle='#2563eb'; ctx.lineWidth=2.5; ctx.stroke();
+  });
+}
+
+function autoDetect(){
+  const cc=document.getElementById('crop-cv');
+  if(!window.cvReady||!cropImg){ptsPorDefecto();return;}
+  const tmp=document.createElement('canvas');
+  tmp.width=cc.width; tmp.height=cc.height;
+  tmp.getContext('2d').drawImage(cropImg,0,0,cc.width,cc.height);
+  try{ const found=encontrarDoc(tmp); pts=found||ptsPorDefecto(); }
+  catch(e){ pts=ptsPorDefecto(); }
+  dibujarCrop();
+}
+
+function ptsPorDefecto(){
+  const cc=document.getElementById('crop-cv'); const m=24;
+  pts=[{x:m,y:m},{x:cc.width-m,y:m},{x:cc.width-m,y:cc.height-m},{x:m,y:cc.height-m}];
+  return pts;
+}
+
+// OpenCV detector
+function encontrarDoc(canvas){
+  if(!window.cv)return null;
+  let src,gray,blur,edge,contours,hier;
+  try{
+    src=cv.imread(canvas); gray=new cv.Mat(); blur=new cv.Mat(); edge=new cv.Mat();
+    contours=new cv.MatVector(); hier=new cv.Mat();
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
+    cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
+    cv.Canny(blur,edge,50,150);
+    const k=cv.Mat.ones(3,3,cv.CV_8U); cv.dilate(edge,edge,k); k.delete();
+    cv.findContours(edge,contours,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+    let best=null, bestA=canvas.width*canvas.height*0.04;
+    for(let i=0;i<contours.size();i++){
+      const cnt=contours.get(i);
+      const peri=cv.arcLength(cnt,true);
+      const approx=new cv.Mat();
+      cv.approxPolyDP(cnt,approx,0.02*peri,true);
+      if(approx.rows===4){
+        const a=cv.contourArea(approx);
+        if(a>bestA){bestA=a;best=[];for(let j=0;j<4;j++)best.push({x:approx.data32S[j*2],y:approx.data32S[j*2+1]});}
+      }
+      approx.delete(); cnt.delete();
+    }
+    return best?ordenarPts(best):null;
+  }finally{[src,gray,blur,edge,contours,hier].forEach(m=>{try{if(m)m.delete();}catch(e){}});}
+}
+
+function ordenarPts(p){
+  const cx=p.reduce((s,q)=>s+q.x,0)/4, cy=p.reduce((s,q)=>s+q.y,0)/4;
+  return [
+    p.filter(q=>q.x<cx&&q.y<cy).sort((a,b)=>(a.x+a.y)-(b.x+b.y))[0]||p[0],
+    p.filter(q=>q.x>cx&&q.y<cy).sort((a,b)=>(b.x-b.y)-(a.x-a.y))[0]||p[1],
+    p.filter(q=>q.x>cx&&q.y>cy).sort((a,b)=>(b.x+b.y)-(a.x+a.y))[0]||p[2],
+    p.filter(q=>q.x<cx&&q.y>cy).sort((a,b)=>(b.y-b.x)-(a.y-a.x))[0]||p[3],
+  ].map((q,i)=>q||p[i]);
+}
+
+// Drag handles
+const cropCv=document.getElementById('crop-cv');
+function cvPos(e){
+  const r=cropCv.getBoundingClientRect();
+  const sx=cropCv.width/r.width, sy=cropCv.height/r.height;
+  const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  const cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+  return{x:cx*sx,y:cy*sy};
+}
+cropCv.addEventListener('mousedown', e=>{if(!pts)return;const pos=cvPos(e);dragging=pts.findIndex(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<38);if(dragging>=0)e.preventDefault();},{passive:false});
+cropCv.addEventListener('touchstart',e=>{if(!pts)return;const pos=cvPos(e);dragging=pts.findIndex(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<38);if(dragging>=0)e.preventDefault();},{passive:false});
+cropCv.addEventListener('mousemove', e=>{if(dragging<0||!pts)return;e.preventDefault();const pos=cvPos(e);const cc=document.getElementById('crop-cv');pts[dragging]={x:Math.max(0,Math.min(cc.width,pos.x)),y:Math.max(0,Math.min(cc.height,pos.y))};dibujarCrop();},{passive:false});
+cropCv.addEventListener('touchmove', e=>{if(dragging<0||!pts)return;e.preventDefault();const pos=cvPos(e);const cc=document.getElementById('crop-cv');pts[dragging]={x:Math.max(0,Math.min(cc.width,pos.x)),y:Math.max(0,Math.min(cc.height,pos.y))};dibujarCrop();},{passive:false});
+cropCv.addEventListener('mouseup',()=>dragging=-1);
+cropCv.addEventListener('touchend',()=>dragging=-1);
+
+// ══════════════════════
+// WARP (perspectiva)
+// ══════════════════════
+async function aplicarRecorte(){
+  if(!pts)return;
+  showLoader('Corrigiendo perspectiva…');
+  await sleep(60);
+  try{
+    const result=hacerWarp();
+    if(!result)throw new Error('Error');
+    hideLoader();
+    document.getElementById('res-img').src=result;
+    selFmt='pdf';
+    document.querySelectorAll('.fmt-chip').forEach(c=>c.classList.remove('sel'));
+    document.querySelector('[data-fmt="pdf"]').classList.add('sel');
+    document.getElementById('dl-lbl').textContent='Guardar PDF';
+    const nombres={doc:'Documento',card:'Tarjeta',wb:'Pizarra',photo:'Foto'};
+    const doc={
+      id:Date.now(), url:result,
+      name:`${nombres[mode]||'Escaneo'} ${docs.length+1}`,
+      date:new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}),
+      time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+    };
+    docs.unshift(doc); guardarDocs(); actualizarHome();
+    show('s-result');
+  }catch(e){hideLoader();alert('Error al procesar imagen');}
+}
+
+function hacerWarp(){
+  const s=cScale;
+  const sp=pts.map(p=>({x:p.x/s,y:p.y/s}));
+  const iW=cropImg.naturalWidth, iH=cropImg.naturalHeight;
+  const srcC=document.createElement('canvas');
+  srcC.width=iW; srcC.height=iH;
+  srcC.getContext('2d').drawImage(cropImg,0,0);
+  if(!window.cvReady||!window.cv){
+    const xs=sp.map(p=>p.x),ys=sp.map(p=>p.y);
+    const x1=Math.min(...xs),y1=Math.min(...ys),x2=Math.max(...xs),y2=Math.max(...ys);
+    const out=document.createElement('canvas');
+    out.width=x2-x1; out.height=y2-y1;
+    out.getContext('2d').drawImage(srcC,x1,y1,out.width,out.height,0,0,out.width,out.height);
+    return out.toDataURL('image/jpeg',0.97);
+  }
+  let srcM,dstM,srcT,dstT,M;
+  try{
+    const [tl,tr,br,bl]=sp;
+    const outW=Math.round(Math.max(Math.hypot(br.x-bl.x,br.y-bl.y),Math.hypot(tr.x-tl.x,tr.y-tl.y)));
+    const outH=Math.round(Math.max(Math.hypot(tr.x-br.x,tr.y-br.y),Math.hypot(tl.x-bl.x,tl.y-bl.y)));
+    srcM=cv.imread(srcC); dstM=new cv.Mat();
+    srcT=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,br.x,br.y,bl.x,bl.y]);
+    dstT=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,outW,0,outW,outH,0,outH]);
+    M=cv.getPerspectiveTransform(srcT,dstT);
+    cv.warpPerspective(srcM,dstM,M,new cv.Size(outW,outH),cv.INTER_LINEAR,cv.BORDER_CONSTANT,new cv.Scalar());
+    const enh=new cv.Mat();
+    dstM.convertTo(enh,-1,1.18,10); // contraste + brillo
+    const out=document.createElement('canvas');
+    out.width=outW; out.height=outH;
+    cv.imshow(out,enh); enh.delete();
+    return out.toDataURL('image/jpeg',0.97);
+  }finally{[srcM,dstM,srcT,dstT,M].forEach(m=>{try{if(m)m.delete();}catch(e){}});}
+}
+
+// ══════════════════════
+// FORMATOS + GUARDAR
+// ══════════════════════
+function pickFmt(el){
+  document.querySelectorAll('.fmt-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel'); selFmt=el.dataset.fmt;
+  document.getElementById('dl-lbl').textContent=`Guardar ${selFmt.toUpperCase()}`;
+}
+
+async function guardarDoc(){
+  const img=document.getElementById('res-img');
+  if(!img.src||img.src===window.location.href)return;
+  const doc=docs[0];
+  showLoader(`Exportando ${selFmt.toUpperCase()}…`);
+  await sleep(60);
+  try{
+    if(selFmt==='pdf') await exportarPDF(img.src,doc.name);
+    else exportarImagen(img.src,selFmt,doc.name);
+  }catch(e){alert('Error al exportar');}
+  hideLoader();
+}
+
+async function exportarPDF(url,name){
+  const {jsPDF}=window.jspdf;
+  const img=new Image();
+  await new Promise(r=>{img.onload=r;img.src=url;});
+  const w=img.naturalWidth, h=img.naturalHeight;
+  const pdf=new jsPDF({orientation:h>=w?'portrait':'landscape',unit:'px',format:[w,h]});
+  pdf.addImage(url,'JPEG',0,0,w,h,'','FAST');
+  pdf.save(`${name}.pdf`);
+}
+
+function exportarImagen(url,fmt,name){
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement('canvas');
+    c.width=img.naturalWidth; c.height=img.naturalHeight;
+    c.getContext('2d').drawImage(img,0,0);
+    const mimes={jpg:'image/jpeg',png:'image/png',webp:'image/webp',bmp:'image/bmp'};
+    let out;
+    try{out=c.toDataURL(mimes[fmt]||'image/jpeg',fmt==='jpg'?0.95:undefined);}
+    catch(e){out=c.toDataURL('image/jpeg',0.95);}
+    descargar(out,`${name}.${fmt}`);
+  };
+  img.src=url;
+}
+
+function descargar(url,filename){
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ══════════════════════
+// GALERÍA
+// ══════════════════════
+function guardarDocs(){try{localStorage.setItem('sd4',JSON.stringify(docs));}catch(e){}}
+
+function renderGaleria(){
+  const body=document.getElementById('gal-body');
+  if(docs.length===0){
+    body.innerHTML=`<div class="empty"><div class="eico">📂</div><h3>Sin documentos</h3><p>Toca + para escanear</p></div>`;
+    return;
+  }
+  body.innerHTML=`<div class="gal-grid">${docs.map(d=>`
+    <div class="gal-card" onclick="verDoc(${d.id})">
+      <div class="gal-img"><img src="${d.url}" loading="lazy"></div>
+      <div class="gal-info"><div class="gal-name">${d.name}</div><div class="gal-date">${d.date} · ${d.time}</div></div>
+    </div>`).join('')}</div>`;
+}
+
+function verDoc(id){
+  const d=docs.find(x=>x.id===id); if(!d)return;
+  viewId=id;
+  document.getElementById('view-name').textContent=d.name;
+  document.getElementById('view-img').src=d.url;
+  show('s-view');
+}
+
+function borrarDoc(){
+  if(!confirm('¿Eliminar este documento?'))return;
+  docs=docs.filter(d=>d.id!==viewId);
+  guardarDocs(); actualizarHome(); renderGaleria(); show('s-gal');
+}
+
+async function compartirDoc(){
+  const d=docs.find(x=>x.id===viewId); if(!d)return;
+  try{
+    const blob=await(await fetch(d.url)).blob();
+    const file=new File([blob],`${d.name}.jpg`,{type:'image/jpeg'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})) await navigator.share({files:[file],title:d.name});
+    else descargar(d.url,`${d.name}.jpg`);
+  }catch(e){}
+}
+
+function descargarViewDoc(){
+  const d=docs.find(x=>x.id===viewId);
+  if(d) descargar(d.url,`${d.name}.jpg`);
+}
+
+// ══════════════════════
+// UTILS
+// ══════════════════════
+function showLoader(t){document.getElementById('load-txt').textContent=t||'Procesando…';document.getElementById('loader').classList.add('on');}
+function hideLoader(){document.getElementById('loader').classList.remove('on');}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+window.addEventListener('resize',()=>{
+  if(document.getElementById('s-crop').classList.contains('on')&&cropImg) layoutCrop();
+});
+</script>
+</body>
+</html>
