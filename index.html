@@ -192,6 +192,19 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 @keyframes sp{to{transform:rotate(360deg)}}
 .load-txt{font-size:14px;color:var(--muted);font-weight:500;}
 
+/* ══ MODAL NOMBRE ══ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:800;display:none;align-items:flex-end;backdrop-filter:blur(6px);}
+.modal-overlay.on{display:flex;}
+.modal-sheet{width:100%;background:#161b27;border-radius:22px 22px 0 0;border-top:1px solid var(--border);padding:18px 20px calc(var(--sb)+20px);}
+.modal-handle{width:32px;height:4px;border-radius:2px;background:rgba(255,255,255,0.12);margin:0 auto 18px;}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.modal-input{width:100%;padding:14px 16px;background:var(--card);border:1.5px solid var(--border);border-radius:14px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:14px;-webkit-appearance:none;}
+.modal-input:focus{border-color:var(--blue2);}
+.modal-btns{display:flex;gap:10px;}
+.btn-modal-cancel{flex:1;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--faint);color:var(--muted);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.btn-modal-ok{flex:2;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--green),#15803d);color:#fff;font-size:14px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(22,163,74,0.3);}
+
 canvas{display:none;}
 canvas#live-cv,canvas#crop-cv{display:block;}
 </style>
@@ -286,6 +299,10 @@ canvas#live-cv,canvas#crop-cv{display:block;}
     <button class="btn-scan" onclick="abrirCamara()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="white" stroke-width="1.8" fill="none"/><circle cx="12" cy="13" r="4" stroke="white" stroke-width="1.8"/></svg>
       Escanear
+    </button>
+    <button class="btn-scan" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);box-shadow:0 8px 26px rgba(124,58,237,0.4)" onclick="importarDeGaleria()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><circle cx="8.5" cy="8.5" r="1.5" fill="white"/><path d="M21 15l-5-5L5 21" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Importar foto de galería
     </button>
     <button class="btn-gal" id="btn-gal" style="display:none" onclick="abrirGaleria()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/></svg>
@@ -403,12 +420,32 @@ canvas#live-cv,canvas#crop-cv{display:block;}
   <div class="view-img-wrap"><img id="view-img" src="" alt=""></div>
   <div class="view-bot">
     <button class="btn-back" style="flex:1" onclick="compartirDoc()">📤 Compartir</button>
-    <button class="btn-apply" style="flex:2" onclick="descargarViewDoc()">⬇️ Descargar</button>
+    <button class="btn-back" style="flex:1" onclick="renombrarDoc()">✏️ Renombrar</button>
+    <button class="btn-apply" style="flex:1.5" onclick="descargarViewDoc()">⬇️ Descargar</button>
   </div>
 </div>
 
 <!-- LOADER -->
 <div id="loader"><div class="spin"></div><div class="load-txt" id="load-txt">Procesando…</div></div>
+
+<!-- INPUT OCULTO PARA IMPORTAR FOTOS DE GALERÍA -->
+<input type="file" id="file-import" accept="image/*" style="display:none" onchange="onFotoImportada(this)">
+
+<!-- MODAL CAMBIAR NOMBRE -->
+<div class="modal-overlay" id="modal-nombre">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">✏️ Nombre del documento</div>
+    <div class="modal-sub">Escribe el nombre antes de guardar</div>
+    <input class="modal-input" id="input-nombre" type="text" placeholder="Ej: Factura enero, Contrato..." maxlength="60">
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="cerrarModalNombre()">Cancelar</button>
+      <button class="btn-modal-ok" onclick="confirmarGuardado()">
+        <span id="modal-ok-lbl">💾 Guardar PDF</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <canvas id="cap-cv"></canvas>
 <canvas id="out-cv"></canvas>
@@ -820,6 +857,66 @@ function hacerWarp(){
 }
 
 // ══════════════════════
+// IMPORTAR DE GALERÍA
+// ══════════════════════
+function importarDeGaleria(){
+  document.getElementById('file-import').click();
+}
+
+function onFotoImportada(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    rawUrl = e.target.result;
+    mode = 'photo';
+    abrirRecorte();
+  };
+  reader.readAsDataURL(file);
+  // Reset input para poder volver a importar la misma foto
+  input.value = '';
+}
+
+// ══════════════════════
+// MODAL CAMBIAR NOMBRE
+// ══════════════════════
+let pendingExport = null; // {url, fmt}
+
+function abrirModalNombre(){
+  const doc = docs[0];
+  const input = document.getElementById('input-nombre');
+  input.value = doc ? doc.name : '';
+  document.getElementById('modal-ok-lbl').textContent = `💾 Guardar ${selFmt.toUpperCase()}`;
+  document.getElementById('modal-nombre').classList.add('on');
+  setTimeout(()=>input.focus(), 300);
+}
+
+function cerrarModalNombre(){
+  document.getElementById('modal-nombre').classList.remove('on');
+}
+
+async function confirmarGuardado(){
+  const input = document.getElementById('input-nombre');
+  const nombre = input.value.trim();
+  if(!nombre){ input.focus(); return; }
+
+  // Actualizar nombre en docs
+  if(docs.length > 0) docs[0].name = nombre;
+  guardarDocs();
+
+  cerrarModalNombre();
+
+  const img = document.getElementById('res-img');
+  showLoader(`Exportando ${selFmt.toUpperCase()}…`);
+  await sleep(60);
+  try{
+    if(selFmt==='pdf') await exportarPDF(img.src, nombre);
+    else exportarImagen(img.src, selFmt, nombre);
+  }catch(e){ alert('Error al exportar'); }
+  hideLoader();
+}
+
+// ══════════════════════
 // FORMATOS + GUARDAR
 // ══════════════════════
 function pickFmt(el){
@@ -829,16 +926,10 @@ function pickFmt(el){
 }
 
 async function guardarDoc(){
-  const img=document.getElementById('res-img');
-  if(!img.src||img.src===window.location.href)return;
-  const doc=docs[0];
-  showLoader(`Exportando ${selFmt.toUpperCase()}…`);
-  await sleep(60);
-  try{
-    if(selFmt==='pdf') await exportarPDF(img.src,doc.name);
-    else exportarImagen(img.src,selFmt,doc.name);
-  }catch(e){alert('Error al exportar');}
-  hideLoader();
+  const img = document.getElementById('res-img');
+  if(!img.src || img.src===window.location.href) return;
+  // Abrir modal para cambiar nombre antes de guardar
+  abrirModalNombre();
 }
 
 async function exportarPDF(url,name){
@@ -902,6 +993,16 @@ function borrarDoc(){
   if(!confirm('¿Eliminar este documento?'))return;
   docs=docs.filter(d=>d.id!==viewId);
   guardarDocs(); actualizarHome(); renderGaleria(); show('s-gal');
+}
+
+function renombrarDoc(){
+  const d = docs.find(x=>x.id===viewId); if(!d) return;
+  const nuevoNombre = prompt('Nuevo nombre:', d.name);
+  if(!nuevoNombre || !nuevoNombre.trim()) return;
+  d.name = nuevoNombre.trim();
+  guardarDocs();
+  document.getElementById('view-name').textContent = d.name;
+  renderGaleria();
 }
 
 async function compartirDoc(){
