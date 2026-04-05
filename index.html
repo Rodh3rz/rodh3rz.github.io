@@ -207,6 +207,44 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 
 canvas{display:none;}
 canvas#live-cv,canvas#crop-cv{display:block;}
+
+/* ══ LOUPE / LUPA DE ZOOM ══ */
+#crop-loupe{
+  position:absolute;
+  width:100px; height:100px;
+  border-radius:50%;
+  overflow:hidden;
+  border:2.5px solid #3b82f6;
+  box-shadow:0 0 0 1px rgba(59,130,246,0.3), 0 8px 28px rgba(0,0,0,0.8);
+  pointer-events:none;
+  display:none;
+  z-index:50;
+  background:#0d1117;
+}
+#crop-loupe.on{ display:block; }
+#crop-loupe canvas{ width:100%; height:100%; display:block; }
+.loupe-cross{
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none; width:16px; height:16px;
+}
+.loupe-cross::before,.loupe-cross::after{
+  content:''; position:absolute; background:#3b82f6;
+}
+.loupe-cross::before{ width:1px;height:100%;left:50%;transform:translateX(-50%); }
+.loupe-cross::after{ height:1px;width:100%;top:50%;transform:translateY(-50%); }
+.loupe-zoom-tag{
+  position:absolute;
+  font-size:9px; font-weight:700;
+  font-family:'DM Sans',sans-serif;
+  color:#93c5fd;
+  background:rgba(37,99,235,0.35);
+  border:1px solid rgba(59,130,246,0.4);
+  border-radius:6px;
+  padding:1px 5px;
+  bottom:6px; right:6px;
+  pointer-events:none;
+}
 </style>
 </head>
 <body>
@@ -349,8 +387,14 @@ canvas#live-cv,canvas#crop-cv{display:block;}
     </div>
     <button class="auto-btn" onclick="autoDetect()">Auto ✨</button>
   </div>
-  <div class="crop-wrap" id="crop-wrap">
+  <div class="crop-wrap" id="crop-wrap" style="position:relative;">
     <canvas id="crop-cv"></canvas>
+    <!-- LUPA DE ZOOM -->
+    <div id="crop-loupe">
+      <canvas id="loupe-cv" width="200" height="200"></canvas>
+      <div class="loupe-cross"></div>
+      <div class="loupe-zoom-tag">3×</div>
+    </div>
   </div>
   <div class="crop-bot">
     <button class="btn-back" onclick="retake()">↩ Repetir</button>
@@ -475,36 +519,27 @@ window.addEventListener('cv-ready',()=>{
 // el diálogo nativo del
 // sistema operativo.
 // ══════════════════════
+// Función central para pedir cámara (usada por botón y por primer toque)
 async function pedirPermisos() {
   const btn = document.getElementById('btn-perm');
   btn.disabled = true;
   btn.textContent = '⏳ Esperando permiso…';
-
   try {
-    // Esto dispara el cuadro nativo de Android
     const s = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: 'environment' } },
       audio: false
     });
-    // ✅ Permiso concedido
     s.getTracks().forEach(t => t.stop());
-
     setBadge('pb-cam', 'pi-cam', true);
     setBadge('pb-stor', 'pi-stor', true);
-
     btn.textContent = '✅ ¡Permisos concedidos!';
     btn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
-
-    // Esperar un momento y pasar al home
-    await sleep(700);
+    await sleep(500);
     show('s-home');
     actualizarHome();
-
   } catch(err) {
-    // ❌ Usuario negó o no hay cámara
     setBadge('pb-cam', 'pi-cam', false);
     document.getElementById('denied-box').classList.add('show');
-
     btn.disabled = false;
     btn.textContent = '🔄 Reintentar permiso';
     btn.style.background = 'linear-gradient(135deg,#dc2626,#b91c1c)';
@@ -521,9 +556,11 @@ function setBadge(badgeId, itemId, ok) {
   b.textContent = ok ? '✓' : '✗';
 }
 
-// Verificar si ya tiene permiso al cargar
+// Al cargar: si ya tiene permiso ir al home, si no esperar primer toque
 window.addEventListener('load', async () => {
   if (!navigator.mediaDevices) return;
+
+  // Si ya fue concedido antes: saltar directo al Home
   try {
     if (navigator.permissions) {
       const r = await navigator.permissions.query({name:'camera'});
@@ -532,9 +569,21 @@ window.addEventListener('load', async () => {
         setBadge('pb-stor','pi-stor',true);
         show('s-home');
         actualizarHome();
+        return;
       }
     }
-  } catch(e) { /* silencioso */ }
+  } catch(e) {}
+
+  // Primer toque en CUALQUIER lugar de la pantalla dispara el diálogo nativo
+  // (el navegador móvil requiere un gesto del usuario para getUserMedia)
+  const permScr = document.getElementById('s-perm');
+  function onFirstGesture() {
+    permScr.removeEventListener('touchstart', onFirstGesture);
+    permScr.removeEventListener('click',      onFirstGesture);
+    pedirPermisos();
+  }
+  permScr.addEventListener('touchstart', onFirstGesture, { once: true });
+  permScr.addEventListener('click',      onFirstGesture, { once: true });
 });
 
 // ══════════════════════
@@ -789,10 +838,68 @@ function cvPos(e){
 }
 cropCv.addEventListener('mousedown', e=>{if(!pts)return;const pos=cvPos(e);dragging=pts.findIndex(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<38);if(dragging>=0)e.preventDefault();},{passive:false});
 cropCv.addEventListener('touchstart',e=>{if(!pts)return;const pos=cvPos(e);dragging=pts.findIndex(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<38);if(dragging>=0)e.preventDefault();},{passive:false});
-cropCv.addEventListener('mousemove', e=>{if(dragging<0||!pts)return;e.preventDefault();const pos=cvPos(e);const cc=document.getElementById('crop-cv');pts[dragging]={x:Math.max(0,Math.min(cc.width,pos.x)),y:Math.max(0,Math.min(cc.height,pos.y))};dibujarCrop();},{passive:false});
-cropCv.addEventListener('touchmove', e=>{if(dragging<0||!pts)return;e.preventDefault();const pos=cvPos(e);const cc=document.getElementById('crop-cv');pts[dragging]={x:Math.max(0,Math.min(cc.width,pos.x)),y:Math.max(0,Math.min(cc.height,pos.y))};dibujarCrop();},{passive:false});
-cropCv.addEventListener('mouseup',()=>dragging=-1);
-cropCv.addEventListener('touchend',()=>dragging=-1);
+cropCv.addEventListener('mousemove', e=>{if(dragging<0||!pts)return;e.preventDefault();const pos=cvPos(e);const cc=document.getElementById('crop-cv');pts[dragging]={x:Math.max(0,Math.min(cc.width,pos.x)),y:Math.max(0,Math.min(cc.height,pos.y))};dibujarCrop();mostrarLupa(dragging);},{passive:false});
+cropCv.addEventListener('touchmove', e=>{if(dragging<0||!pts)return;e.preventDefault();const pos=cvPos(e);const cc=document.getElementById('crop-cv');pts[dragging]={x:Math.max(0,Math.min(cc.width,pos.x)),y:Math.max(0,Math.min(cc.height,pos.y))};dibujarCrop();mostrarLupa(dragging);},{passive:false});
+cropCv.addEventListener('mouseup',()=>{dragging=-1;ocultarLupa();});
+cropCv.addEventListener('touchend',()=>{dragging=-1;ocultarLupa();});
+
+// ══════════════════════
+// LUPA DE ZOOM (CORNER LOUPE)
+// ══════════════════════
+function mostrarLupa(idx){
+  const cc = document.getElementById('crop-cv');
+  const loupe = document.getElementById('crop-loupe');
+  const lc = document.getElementById('loupe-cv');
+  const ctx = lc.getContext('2d');
+  const ZOOM = 3;
+  const LSZO = 100; // tamaño visual de la lupa (px CSS)
+  const LCANV = 200; // resolución del canvas interno
+
+  const p = pts[idx];
+
+  // Dibujar zoom sobre el canvas del crop
+  ctx.clearRect(0,0,LCANV,LCANV);
+  const sx = p.x - LCANV/(2*ZOOM);
+  const sy = p.y - LCANV/(2*ZOOM);
+  const sw = LCANV/ZOOM;
+  const sh = LCANV/ZOOM;
+  ctx.drawImage(cc, sx, sy, sw, sh, 0, 0, LCANV, LCANV);
+
+  // Líneas de la esquina superpuestas en la lupa
+  ctx.strokeStyle = 'rgba(59,130,246,0.85)';
+  ctx.lineWidth = 2;
+  // Buscar las líneas que llegan a este punto
+  const prev = pts[(idx+3)%4];
+  const next = pts[(idx+1)%4];
+  // Transformar prev y next al espacio de la lupa
+  function toL(pt){ return { x:(pt.x - sx)*ZOOM, y:(pt.y - sy)*ZOOM }; }
+  const lp = toL(p), lpr = toL(prev), lnx = toL(next);
+  ctx.beginPath();
+  ctx.moveTo(lpr.x, lpr.y); ctx.lineTo(lp.x, lp.y); ctx.lineTo(lnx.x, lnx.y);
+  ctx.stroke();
+
+  // Posicionar la lupa en la esquina OPUESTA para no tapar
+  const wrap = document.getElementById('crop-wrap');
+  const wr = wrap.getBoundingClientRect();
+  const cr = cc.getBoundingClientRect();
+  const margin = 12;
+  // Porcentaje relativo del punto en el canvas
+  const relX = p.x / cc.width;
+  const relY = p.y / cc.height;
+  let lx, ly;
+  if(relX < 0.5 && relY < 0.5){ lx = cr.right - wr.left - LSZO - margin; ly = cr.bottom - wr.top - LSZO - margin; }
+  else if(relX >= 0.5 && relY < 0.5){ lx = cr.left - wr.left + margin; ly = cr.bottom - wr.top - LSZO - margin; }
+  else if(relX >= 0.5 && relY >= 0.5){ lx = cr.left - wr.left + margin; ly = cr.top - wr.top + margin; }
+  else { lx = cr.right - wr.left - LSZO - margin; ly = cr.top - wr.top + margin; }
+
+  loupe.style.left = lx + 'px';
+  loupe.style.top  = ly + 'px';
+  loupe.classList.add('on');
+}
+
+function ocultarLupa(){
+  document.getElementById('crop-loupe').classList.remove('on');
+}
 
 // ══════════════════════
 // WARP (perspectiva)
