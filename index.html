@@ -210,15 +210,15 @@ canvas#live-cv,canvas#crop-cv{display:block;}
 
 /* ══ LOUPE / LUPA DE ZOOM ══ */
 #crop-loupe{
-  position:absolute;
-  width:100px; height:100px;
+  position:fixed;
+  width:120px; height:120px;
   border-radius:50%;
   overflow:hidden;
-  border:2.5px solid #3b82f6;
-  box-shadow:0 0 0 1px rgba(59,130,246,0.3), 0 8px 28px rgba(0,0,0,0.8);
+  border:3px solid #3b82f6;
+  box-shadow:0 0 0 2px rgba(59,130,246,0.4), 0 8px 32px rgba(0,0,0,0.9);
   pointer-events:none;
   display:none;
-  z-index:50;
+  z-index:999;
   background:#0d1117;
 }
 #crop-loupe.on{ display:block; }
@@ -226,24 +226,24 @@ canvas#live-cv,canvas#crop-cv{display:block;}
 .loupe-cross{
   position:absolute; top:50%; left:50%;
   transform:translate(-50%,-50%);
-  pointer-events:none; width:16px; height:16px;
+  pointer-events:none; width:20px; height:20px;
 }
 .loupe-cross::before,.loupe-cross::after{
-  content:''; position:absolute; background:#3b82f6;
+  content:''; position:absolute; background:rgba(59,130,246,0.9);
 }
-.loupe-cross::before{ width:1px;height:100%;left:50%;transform:translateX(-50%); }
-.loupe-cross::after{ height:1px;width:100%;top:50%;transform:translateY(-50%); }
+.loupe-cross::before{ width:1.5px;height:100%;left:50%;transform:translateX(-50%); }
+.loupe-cross::after{ height:1.5px;width:100%;top:50%;transform:translateY(-50%); }
 .loupe-zoom-tag{
   position:absolute;
-  font-size:9px; font-weight:700;
+  font-size:10px; font-weight:700;
   font-family:'DM Sans',sans-serif;
-  color:#93c5fd;
-  background:rgba(37,99,235,0.35);
-  border:1px solid rgba(59,130,246,0.4);
+  color:#fff;
+  background:rgba(37,99,235,0.7);
   border-radius:6px;
-  padding:1px 5px;
-  bottom:6px; right:6px;
+  padding:2px 6px;
+  bottom:8px; left:50%; transform:translateX(-50%);
   pointer-events:none;
+  white-space:nowrap;
 }
 </style>
 </head>
@@ -387,14 +387,8 @@ canvas#live-cv,canvas#crop-cv{display:block;}
     </div>
     <button class="auto-btn" onclick="autoDetect()">Auto ✨</button>
   </div>
-  <div class="crop-wrap" id="crop-wrap" style="position:relative;">
+  <div class="crop-wrap" id="crop-wrap">
     <canvas id="crop-cv"></canvas>
-    <!-- LUPA DE ZOOM -->
-    <div id="crop-loupe">
-      <canvas id="loupe-cv" width="200" height="200"></canvas>
-      <div class="loupe-cross"></div>
-      <div class="loupe-zoom-tag">3×</div>
-    </div>
   </div>
   <div class="crop-bot">
     <button class="btn-back" onclick="retake()">↩ Repetir</button>
@@ -467,6 +461,13 @@ canvas#live-cv,canvas#crop-cv{display:block;}
     <button class="btn-back" style="flex:1" onclick="renombrarDoc()">✏️ Renombrar</button>
     <button class="btn-apply" style="flex:1.5" onclick="descargarViewDoc()">⬇️ Descargar</button>
   </div>
+</div>
+
+<!-- LUPA DE ZOOM FIJA -->
+<div id="crop-loupe">
+  <canvas id="loupe-cv" width="240" height="240"></canvas>
+  <div class="loupe-cross"></div>
+  <div class="loupe-zoom-tag">3× ZOOM</div>
 </div>
 
 <!-- LOADER -->
@@ -847,58 +848,57 @@ cropCv.addEventListener('touchend',()=>{dragging=-1;ocultarLupa();});
 // LUPA DE ZOOM (CORNER LOUPE)
 // ══════════════════════
 function mostrarLupa(idx){
-  const cc = document.getElementById('crop-cv');
+  const cc  = document.getElementById('crop-cv');
   const loupe = document.getElementById('crop-loupe');
-  const lc = document.getElementById('loupe-cv');
+  const lc  = document.getElementById('loupe-cv');
   const ctx = lc.getContext('2d');
-  const ZOOM = 3;
-  const LSZO = 100; // tamaño visual de la lupa (px CSS)
-  const LCANV = 200; // resolución del canvas interno
+  const ZOOM  = 3;
+  const LCANV = 240; // resolución interna del canvas de la lupa
+  const LSIZE = 120; // tamaño visual CSS en px
 
-  const p = pts[idx];
+  const p = pts[idx]; // coordenadas en el canvas del crop
 
-  // Dibujar zoom sobre el canvas del crop
-  ctx.clearRect(0,0,LCANV,LCANV);
-  const sx = p.x - LCANV/(2*ZOOM);
-  const sy = p.y - LCANV/(2*ZOOM);
-  const sw = LCANV/ZOOM;
-  const sh = LCANV/ZOOM;
-  ctx.drawImage(cc, sx, sy, sw, sh, 0, 0, LCANV, LCANV);
+  // ── Dibujar zoom centrado en la esquina ──
+  ctx.clearRect(0, 0, LCANV, LCANV);
+  const sw = LCANV / ZOOM;          // región del crop a capturar
+  const sx = p.x - sw / 2;
+  const sy = p.y - sw / 2;
+  ctx.drawImage(cc, sx, sy, sw, sw, 0, 0, LCANV, LCANV);
 
-  // Líneas de la esquina superpuestas en la lupa
-  ctx.strokeStyle = 'rgba(59,130,246,0.85)';
-  ctx.lineWidth = 2;
-  // Buscar las líneas que llegan a este punto
-  const prev = pts[(idx+3)%4];
-  const next = pts[(idx+1)%4];
-  // Transformar prev y next al espacio de la lupa
+  // ── Dibujar las líneas del borde de recorte dentro de la lupa ──
+  ctx.strokeStyle = "rgba(59,130,246,0.9)";
+  ctx.lineWidth   = 2.5;
+  const prev = pts[(idx + 3) % 4];
+  const next = pts[(idx + 1) % 4];
   function toL(pt){ return { x:(pt.x - sx)*ZOOM, y:(pt.y - sy)*ZOOM }; }
-  const lp = toL(p), lpr = toL(prev), lnx = toL(next);
+  const lp  = toL(p);
+  const lpr = toL(prev);
+  const lnx = toL(next);
   ctx.beginPath();
-  ctx.moveTo(lpr.x, lpr.y); ctx.lineTo(lp.x, lp.y); ctx.lineTo(lnx.x, lnx.y);
+  ctx.moveTo(lpr.x, lpr.y);
+  ctx.lineTo(lp.x,  lp.y);
+  ctx.lineTo(lnx.x, lnx.y);
   ctx.stroke();
 
-  // Posicionar la lupa en la esquina OPUESTA para no tapar
-  const wrap = document.getElementById('crop-wrap');
-  const wr = wrap.getBoundingClientRect();
-  const cr = cc.getBoundingClientRect();
-  const margin = 12;
-  // Porcentaje relativo del punto en el canvas
+  // ── Posicionar la lupa en la esquina OPUESTA de la pantalla (fixed) ──
+  const sw2 = window.innerWidth;
+  const sh2 = window.innerHeight;
+  const margin = 16;
   const relX = p.x / cc.width;
   const relY = p.y / cc.height;
   let lx, ly;
-  if(relX < 0.5 && relY < 0.5){ lx = cr.right - wr.left - LSZO - margin; ly = cr.bottom - wr.top - LSZO - margin; }
-  else if(relX >= 0.5 && relY < 0.5){ lx = cr.left - wr.left + margin; ly = cr.bottom - wr.top - LSZO - margin; }
-  else if(relX >= 0.5 && relY >= 0.5){ lx = cr.left - wr.left + margin; ly = cr.top - wr.top + margin; }
-  else { lx = cr.right - wr.left - LSZO - margin; ly = cr.top - wr.top + margin; }
+  if      (relX < 0.5 && relY < 0.5){ lx = sw2 - LSIZE - margin; ly = sh2 - LSIZE - margin - 80; }
+  else if (relX >= 0.5 && relY < 0.5){ lx = margin;               ly = sh2 - LSIZE - margin - 80; }
+  else if (relX >= 0.5 && relY >= 0.5){ lx = margin;              ly = margin + 60; }
+  else                                { lx = sw2 - LSIZE - margin; ly = margin + 60; }
 
-  loupe.style.left = lx + 'px';
-  loupe.style.top  = ly + 'px';
-  loupe.classList.add('on');
+  loupe.style.left = lx + "px";
+  loupe.style.top  = ly + "px";
+  loupe.classList.add("on");
 }
 
 function ocultarLupa(){
-  document.getElementById('crop-loupe').classList.remove('on');
+  document.getElementById("crop-loupe").classList.remove("on");
 }
 
 // ══════════════════════
