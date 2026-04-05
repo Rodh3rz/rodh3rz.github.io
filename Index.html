@@ -40,7 +40,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 .perm-app{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:6px;text-align:center;}
 .perm-tagline{font-size:14px;color:var(--muted);text-align:center;line-height:1.6;max-width:280px;margin-bottom:32px;}
 
-/* Permission cards */
 .perm-list{width:100%;display:flex;flex-direction:column;gap:12px;margin-bottom:28px;}
 .perm-item{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;transition:border-color .3s;}
 .perm-item.granted{border-color:rgba(22,163,74,0.5);}
@@ -56,7 +55,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 .perm-badge.no{background:var(--red);border-color:var(--red);}
 .perm-badge.wait{background:rgba(245,158,11,0.2);border-color:rgba(245,158,11,0.4);}
 
-/* BIG PERMISSION BUTTON */
 .btn-perm-main{
   width:100%; padding:20px;
   border:none; border-radius:var(--r);
@@ -77,7 +75,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 .perm-hint{font-size:12px;color:var(--muted);text-align:center;line-height:1.7;max-width:290px;}
 .perm-hint strong{color:rgba(255,255,255,0.7);}
 
-/* Denied help box */
 .denied-box{
   display:none; width:100%;
   background:rgba(220,38,38,0.08);
@@ -95,7 +92,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 #s-home{
   background:radial-gradient(ellipse at 70% 0%,rgba(37,99,235,0.15) 0%,transparent 55%),var(--bg);
   justify-content:space-between;
-  padding:calc(var(--st)+14px) 20px calc(var(--sb)+22px);
+  /* MEJORA: menos padding inferior para que los botones no peguen al borde */
+  padding:calc(var(--st)+14px) 20px calc(var(--sb)+6px);
 }
 .home-hdr{display:flex;align-items:center;gap:10px;}
 .home-logo{width:38px;height:38px;border-radius:11px;background:var(--blue);display:flex;align-items:center;justify-content:center;}
@@ -110,9 +108,50 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 .mc .ico{font-size:28px;}
 .mc .lbl{font-size:13px;font-weight:600;font-family:'Syne',sans-serif;}
 .mc .sub{font-size:10px;color:var(--muted);text-align:center;}
-.home-btns{display:flex;flex-direction:column;gap:10px;}
-.btn-scan{width:100%;padding:17px;border:none;border-radius:var(--r);background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 26px rgba(37,99,235,0.42);}
-.btn-gal{width:100%;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--faint);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Sans',sans-serif;}
+
+/* ══ BOTONES HOME — MEJORA: compactos, estilizados, más arriba ══ */
+.home-btns{display:flex;flex-direction:column;gap:8px;padding-bottom:2px;}
+.home-action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* Botón acción principal (dos columnas) */
+.btn-action{
+  padding:14px 8px;
+  border:none; border-radius:16px;
+  color:#fff;
+  font-family:'Syne',sans-serif;
+  font-size:12px; font-weight:800;
+  cursor:pointer;
+  display:flex; flex-direction:column;
+  align-items:center; gap:6px;
+  transition:transform .1s, box-shadow .1s;
+  -webkit-appearance:none;
+  letter-spacing:-0.2px;
+}
+.btn-action:active{transform:scale(0.96);}
+.btn-action-cam{
+  background:linear-gradient(135deg,var(--blue),#1d4ed8);
+  box-shadow:0 6px 20px rgba(37,99,235,0.4);
+}
+.btn-action-gal{
+  background:linear-gradient(135deg,#7c3aed,#5b21b6);
+  box-shadow:0 6px 20px rgba(124,58,237,0.35);
+}
+.btn-action svg{width:20px;height:20px;flex-shrink:0;}
+
+/* Botón secundario Mis documentos */
+.btn-docs{
+  width:100%; padding:10px 14px;
+  border:1px solid rgba(37,99,235,0.25);
+  border-radius:12px;
+  background:rgba(37,99,235,0.07);
+  color:rgba(241,245,249,0.65);
+  font-size:12px; font-weight:500;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-family:'DM Sans',sans-serif;
+  transition:background .2s;
+}
+.btn-docs:active{background:rgba(37,99,235,0.15);}
 .gbadge{background:var(--blue);color:#fff;font-size:9px;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
 
 /* ══ CAMERA ══ */
@@ -124,14 +163,26 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 .cam-top{position:absolute;top:0;left:0;right:0;padding:calc(var(--st)+8px) 16px 14px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);z-index:10;}
 .cam-bot{position:absolute;bottom:0;left:0;right:0;padding:14px 30px calc(var(--sb)+16px);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);z-index:10;}
 .ibtn{width:46px;height:46px;border-radius:14px;background:rgba(0,0,0,.5);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.chip{background:rgba(0,0,0,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:7px 16px;font-size:12px;color:rgba(255,255,255,.85);font-weight:500;transition:all .25s;}
+.chip{background:rgba(0,0,0,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:7px 16px;font-size:12px;color:rgba(255,255,255,.85);font-weight:500;transition:all .25s;max-width:200px;text-align:center;}
 .chip.det{background:rgba(37,99,235,.45);border-color:rgba(37,99,235,.7);color:#93c5fd;}
+.chip.det-card{background:rgba(124,58,237,.45);border-color:rgba(124,58,237,.7);color:#c4b5fd;}
+.chip.det-wb{background:rgba(16,163,74,.35);border-color:rgba(22,163,74,.6);color:#86efac;}
 .shutter{width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,255,255,.9);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .sh-in{width:62px;height:62px;border-radius:50%;background:#fff;transition:transform .1s,opacity .1s;}
 .shutter:active .sh-in{transform:scale(.84);opacity:.7;}
 .thumb{width:52px;height:52px;border-radius:12px;border:2px solid rgba(255,255,255,.35);overflow:hidden;cursor:pointer;background:rgba(255,255,255,.1);position:relative;}
 .thumb img{width:100%;height:100%;object-fit:cover;}
 .tbadge{position:absolute;top:-3px;right:-3px;background:var(--blue);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+
+/* Indicador de resolución de cámara */
+.cam-res-badge{
+  position:absolute;top:calc(var(--st)+8px);right:70px;
+  font-size:9px;font-weight:700;color:rgba(255,255,255,0.45);
+  background:rgba(0,0,0,0.4);
+  border-radius:8px;padding:3px 7px;
+  z-index:11;letter-spacing:0.05em;
+  pointer-events:none;
+}
 
 /* ══ CROP ══ */
 #s-crop{background:#0d1117;}
@@ -208,40 +259,44 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans'
 canvas{display:none;}
 canvas#live-cv,canvas#crop-cv{display:block;}
 
-/* ══ LOUPE / LUPA DE ZOOM ══ */
+/* ══ LUPA DE ZOOM — MEJORA: más grande, más nítida, indicador más pequeño ══ */
 #crop-loupe{
   position:fixed;
-  width:160px; height:160px;
+  /* MEJORA: 180px para ver con más detalle */
+  width:180px; height:180px;
   border-radius:50%;
   overflow:hidden;
-  border:3px solid #60a5fa;
-  box-shadow:0 0 0 1px rgba(96,165,250,0.5), 0 12px 40px rgba(0,0,0,0.95), inset 0 0 0 1px rgba(255,255,255,0.06);
+  border:2.5px solid rgba(96,165,250,0.8);
+  box-shadow:0 0 0 1px rgba(96,165,250,0.3), 0 16px 48px rgba(0,0,0,0.98), inset 0 0 0 1px rgba(255,255,255,0.04);
   pointer-events:none;
   display:none;
   z-index:999;
   background:#000;
 }
 #crop-loupe.on{ display:block; }
-#crop-loupe canvas{ width:100%; height:100%; display:block; image-rendering:pixelated; }
+#crop-loupe canvas{ width:100%; height:100%; display:block; image-rendering:crisp-edges; image-rendering:-webkit-optimize-contrast; }
+
+/* MEJORA: Cruz más pequeña y sutil para no tapar el recorte */
 .loupe-cross{
   position:absolute; top:50%; left:50%;
   transform:translate(-50%,-50%);
-  pointer-events:none; width:24px; height:24px;
+  pointer-events:none; width:16px; height:16px;
 }
 .loupe-cross::before,.loupe-cross::after{
-  content:''; position:absolute; background:rgba(250,204,21,0.95);
+  content:''; position:absolute; background:rgba(250,204,21,0.55);
 }
-.loupe-cross::before{ width:1px;height:100%;left:50%;transform:translateX(-50%); }
-.loupe-cross::after{ height:1px;width:100%;top:50%;transform:translateY(-50%); }
+.loupe-cross::before{ width:1px;height:80%;left:50%;transform:translateX(-50%); }
+.loupe-cross::after{ height:1px;width:80%;top:50%;transform:translateY(-50%); }
+
 .loupe-zoom-tag{
   position:absolute;
-  font-size:10px; font-weight:700;
+  font-size:9px; font-weight:700;
   font-family:'DM Sans',sans-serif;
   color:#fbbf24;
-  background:rgba(0,0,0,0.75);
-  border:1px solid rgba(251,191,36,0.4);
+  background:rgba(0,0,0,0.8);
+  border:1px solid rgba(251,191,36,0.35);
   border-radius:20px;
-  padding:2px 8px;
+  padding:2px 7px;
   bottom:10px; left:50%; transform:translateX(-50%);
   pointer-events:none;
   white-space:nowrap;
@@ -272,7 +327,7 @@ canvas#live-cv,canvas#crop-cv{display:block;}
       <div class="perm-ico blue">📷</div>
       <div class="perm-text">
         <h3>Cámara</h3>
-        <p>Para capturar documentos, tarjetas y pizarras</p>
+        <p>Para capturar documentos, tarjetas y pizarras en alta definición</p>
       </div>
       <div class="perm-badge" id="pb-cam">?</div>
     </div>
@@ -286,7 +341,6 @@ canvas#live-cv,canvas#crop-cv{display:block;}
     </div>
   </div>
 
-  <!-- Caja de ayuda si se deniega (solo se muestra si niegan) -->
   <div class="denied-box" id="denied-box">
     <h4>⚠️ Permiso denegado — Cómo activarlo:</h4>
     <ul class="denied-steps">
@@ -297,7 +351,6 @@ canvas#live-cv,canvas#crop-cv{display:block;}
     </ul>
   </div>
 
-  <!-- BOTÓN PRINCIPAL DE PERMISO -->
   <button class="btn-perm-main" id="btn-perm" onclick="pedirPermisos()">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,0.15)"/>
@@ -328,24 +381,27 @@ canvas#live-cv,canvas#crop-cv{display:block;}
   <div class="mode-sec">
     <h4>Tipo de escaneo</h4>
     <div class="mode-grid">
-      <div class="mc active" onclick="setMode('doc',this)"><span class="ico">📄</span><span class="lbl">Documento</span><span class="sub">A4, facturas, cartas</span></div>
-      <div class="mc" onclick="setMode('card',this)"><span class="ico">💳</span><span class="lbl">Tarjeta</span><span class="sub">ID, crédito, visita</span></div>
-      <div class="mc" onclick="setMode('wb',this)"><span class="ico">📋</span><span class="lbl">Pizarra</span><span class="sub">Notas, diagramas</span></div>
-      <div class="mc" onclick="setMode('photo',this)"><span class="ico">🖼️</span><span class="lbl">Foto</span><span class="sub">Cualquier imagen</span></div>
+      <div class="mc active" data-mode="doc" onclick="setMode('doc',this)"><span class="ico">📄</span><span class="lbl">Documento</span><span class="sub">A4, facturas, cartas</span></div>
+      <div class="mc" data-mode="card" onclick="setMode('card',this)"><span class="ico">💳</span><span class="lbl">Tarjeta</span><span class="sub">ID, crédito, visita</span></div>
+      <div class="mc" data-mode="wb" onclick="setMode('wb',this)"><span class="ico">📋</span><span class="lbl">Pizarra</span><span class="sub">Notas, diagramas</span></div>
+      <div class="mc" data-mode="photo" onclick="setMode('photo',this)"><span class="ico">🖼️</span><span class="lbl">Foto</span><span class="sub">Cualquier imagen</span></div>
     </div>
   </div>
 
+  <!-- MEJORA: Botones compactos, 2 columnas, más arriba -->
   <div class="home-btns">
-    <button class="btn-scan" onclick="abrirCamara()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="white" stroke-width="1.8" fill="none"/><circle cx="12" cy="13" r="4" stroke="white" stroke-width="1.8"/></svg>
-      Escanear
-    </button>
-    <button class="btn-scan" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);box-shadow:0 8px 26px rgba(124,58,237,0.4)" onclick="importarDeGaleria()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><circle cx="8.5" cy="8.5" r="1.5" fill="white"/><path d="M21 15l-5-5L5 21" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Importar foto de galería
-    </button>
-    <button class="btn-gal" id="btn-gal" style="display:none" onclick="abrirGaleria()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/></svg>
+    <div class="home-action-row">
+      <button class="btn-action btn-action-cam" onclick="abrirCamara()">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" stroke="white" stroke-width="1.8" fill="none"/><circle cx="12" cy="13" r="4" stroke="white" stroke-width="1.8"/></svg>
+        Escanear
+      </button>
+      <button class="btn-action btn-action-gal" onclick="importarDeGaleria()">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><circle cx="8.5" cy="8.5" r="1.5" fill="white"/><path d="M21 15l-5-5L5 21" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Importar foto
+      </button>
+    </div>
+    <button class="btn-docs" id="btn-gal" style="display:none" onclick="abrirGaleria()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/></svg>
       Mis documentos
       <span class="gbadge" id="gal-count">0</span>
     </button>
@@ -357,6 +413,7 @@ canvas#live-cv,canvas#crop-cv{display:block;}
   <video id="vid" autoplay playsinline muted></video>
   <canvas id="live-cv"></canvas>
   <div class="flash" id="flash"></div>
+  <div id="cam-res-lbl" class="cam-res-badge"></div>
   <div class="cam-top">
     <button class="ibtn" onclick="goHome()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -465,11 +522,13 @@ canvas#live-cv,canvas#crop-cv{display:block;}
   </div>
 </div>
 
-<!-- LUPA DE ZOOM FIJA -->
+<!-- LUPA DE ZOOM MEJORADA -->
 <div id="crop-loupe">
-  <canvas id="loupe-cv" width="320" height="320"></canvas>
+  <!-- MEJORA: 560×560 px canvas interno para mayor nitidez (antes 320×320) -->
+  <canvas id="loupe-cv" width="560" height="560"></canvas>
   <div class="loupe-cross"></div>
-  <div class="loupe-zoom-tag">3× ZOOM</div>
+  <!-- MEJORA: actualizado a 5× ZOOM -->
+  <div class="loupe-zoom-tag">5× ZOOM</div>
 </div>
 
 <!-- LOADER -->
@@ -503,26 +562,29 @@ canvas#live-cv,canvas#crop-cv{display:block;}
 // ══════════════════════
 let docs = [];
 try { docs = JSON.parse(localStorage.getItem('sd4')||'[]'); } catch(e){}
+// MEJORA: contador de orden de inserción (no usa fecha de archivo)
+let docInsertOrder = 0;
+try { docInsertOrder = parseInt(localStorage.getItem('sd4-order')||'0'); } catch(e){}
+
 let camStream=null, facing='environment', mode='doc';
 let rawUrl=null, cropImg=null, pts=null, dragging=-1, cScale=1;
 let selFmt='pdf', viewId=null, liveT=null;
+
+// MEJORA: variables para detección de tipo por IA
+let modeDetectCount = {};
+let lastAutoMode = null;
 
 // ══════════════════════
 // OPENCV
 // ══════════════════════
 window.addEventListener('cv-ready',()=>{
   const p=document.getElementById('cv-pill');
-  p.textContent='✓ Detección activa'; p.classList.add('rdy');
+  p.textContent='✓ IA activa'; p.classList.add('rdy');
 });
 
 // ══════════════════════
 // PANTALLA DE PERMISOS
-// Funciona en Android:
-// getUserMedia() dispara
-// el diálogo nativo del
-// sistema operativo.
 // ══════════════════════
-// Función central para pedir cámara (usada por botón y por primer toque)
 async function pedirPermisos() {
   const btn = document.getElementById('btn-perm');
   btn.disabled = true;
@@ -559,11 +621,8 @@ function setBadge(badgeId, itemId, ok) {
   b.textContent = ok ? '✓' : '✗';
 }
 
-// Al cargar: si ya tiene permiso ir al home, si no esperar primer toque
 window.addEventListener('load', async () => {
   if (!navigator.mediaDevices) return;
-
-  // Si ya fue concedido antes: saltar directo al Home
   try {
     if (navigator.permissions) {
       const r = await navigator.permissions.query({name:'camera'});
@@ -576,9 +635,6 @@ window.addEventListener('load', async () => {
       }
     }
   } catch(e) {}
-
-  // Primer toque en CUALQUIER lugar de la pantalla dispara el diálogo nativo
-  // (el navegador móvil requiere un gesto del usuario para getUserMedia)
   const permScr = document.getElementById('s-perm');
   function onFirstGesture() {
     permScr.removeEventListener('touchstart', onFirstGesture);
@@ -608,6 +664,14 @@ function setMode(m,el){
   document.querySelectorAll('.mc').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
 }
+
+// MEJORA: actualizar grid de modo automáticamente desde detección IA
+function actualizarModeGrid(){
+  document.querySelectorAll('.mc').forEach(c=>{
+    c.classList.toggle('active', c.dataset.mode === mode);
+  });
+}
+
 function actualizarHome(){
   const b=document.getElementById('btn-gal');
   b.style.display=docs.length>0?'flex':'none';
@@ -615,30 +679,57 @@ function actualizarHome(){
 }
 
 // ══════════════════════
-// CAMARA
+// CAMARA — MEJORA: mejor aprovechamiento de cámara nativa
 // ══════════════════════
 async function abrirCamara(){
   show('s-cam');
   pararCamara();
+  modeDetectCount = {};
   document.getElementById('shutter').disabled=true;
+  document.getElementById('cam-res-lbl').textContent='';
   try {
+    // MEJORA: máxima resolución posible para la cámara trasera
     camStream = await navigator.mediaDevices.getUserMedia({
       video:{
-        facingMode:{ideal:facing},
-        width:{ideal:3840}, height:{ideal:2160},
+        facingMode:{ideal: facing},
+        width:{ideal:4096},
+        height:{ideal:3072},
       },
       audio:false
     });
+
+    // MEJORA: aplicar constraints avanzados para mejor calidad de imagen
+    const track = camStream.getVideoTracks()[0];
+    if(track && track.applyConstraints){
+      try {
+        await track.applyConstraints({
+          advanced: [
+            { focusMode: 'continuous' },
+            { exposureMode: 'continuous' },
+            { whiteBalanceMode: 'continuous' },
+          ]
+        });
+      } catch(e){ /* no todos los dispositivos lo soportan */ }
+    }
+
     const v=document.getElementById('vid');
     v.srcObject=camStream;
     v.onloadedmetadata=()=>{
       v.play();
       document.getElementById('shutter').disabled=false;
       actualizarThumb();
+
+      // MEJORA: mostrar resolución real de captura
+      const settings = camStream.getVideoTracks()[0]?.getSettings();
+      if(settings && settings.width && settings.height){
+        const mpx = ((settings.width * settings.height)/1e6).toFixed(1);
+        document.getElementById('cam-res-lbl').textContent =
+          `${settings.width}×${settings.height} (${mpx}MP)`;
+      }
+
       if(window.cvReady) iniciarLive();
     };
   } catch(e) {
-    // Si se deniega aquí, volver a permisos
     document.getElementById('denied-box').classList.add('show');
     document.getElementById('btn-perm').disabled=false;
     document.getElementById('btn-perm').textContent='🔄 Reintentar permiso';
@@ -657,6 +748,25 @@ async function flipCam(){
   await abrirCamara();
 }
 
+// ══════════════════════
+// DETECCIÓN IA DE TIPO DE DOCUMENTO — MEJORA
+// ══════════════════════
+function detectarTipoDoc(pts, canvasW, canvasH){
+  const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+  const bW = Math.max(...xs) - Math.min(...xs);
+  const bH = Math.max(...ys) - Math.min(...ys);
+  if(!bW || !bH) return 'doc';
+  const aspect   = bW / bH;
+  const fillRatio = (bW * bH) / (canvasW * canvasH);
+
+  // Tarjeta de crédito/ID: orientación horizontal, relación de aspecto ~1.59
+  if(aspect >= 1.38 && aspect <= 1.85 && fillRatio < 0.48) return 'card';
+  // Pizarra: ocupa gran parte del encuadre, cualquier orientación
+  if(fillRatio > 0.62) return 'wb';
+  // Por defecto: documento
+  return 'doc';
+}
+
 function iniciarLive(){
   pararLive();
   const v=document.getElementById('vid');
@@ -673,12 +783,32 @@ function iniciarLive(){
       const chip=document.getElementById('cam-chip');
       if(found){
         dibujarLive(ctx,found,lc.width,lc.height);
-        chip.textContent='✓ Documento detectado'; chip.classList.add('det');
+
+        // MEJORA: IA detecta el tipo y auto-cambia el modo
+        const tipo = detectarTipoDoc(found, lc.width, lc.height);
+        modeDetectCount[tipo] = (modeDetectCount[tipo]||0) + 1;
+        Object.keys(modeDetectCount).forEach(k=>{ if(k!==tipo) modeDetectCount[k]=0; });
+
+        // Cambio automático de modo tras 4 frames consistentes
+        if(modeDetectCount[tipo] >= 4 && tipo !== mode){
+          mode = tipo;
+          actualizarModeGrid();
+          modeDetectCount = {};
+        }
+
+        const typeLabels = {
+          doc:  '📄 Documento detectado',
+          card: '💳 Tarjeta detectada',
+          wb:   '📋 Pizarra detectada',
+        };
+        chip.textContent = typeLabels[tipo] || '✓ Detectado';
+        chip.className = 'chip ' + (tipo==='card'?'det-card':tipo==='wb'?'det-wb':'det');
       } else {
-        chip.textContent='Apunta al documento'; chip.classList.remove('det');
+        chip.textContent='Apunta al documento';
+        chip.className='chip';
       }
     }catch(e){}
-  },250);
+  }, 220); // MEJORA: 220ms → detección más fluida
 }
 function pararLive(){if(liveT){clearInterval(liveT);liveT=null;}}
 
@@ -708,8 +838,9 @@ function snap(){
   f.classList.add('on'); setTimeout(()=>f.classList.remove('on'),160);
   const c=document.getElementById('cap-cv');
   c.width=v.videoWidth; c.height=v.videoHeight;
+  // MEJORA: calidad 0.99 para captura HD
   c.getContext('2d').drawImage(v,0,0);
-  rawUrl=c.toDataURL('image/jpeg',0.97);
+  rawUrl=c.toDataURL('image/jpeg',0.99);
   pararCamara();
   abrirRecorte();
 }
@@ -748,6 +879,9 @@ function layoutCrop(){
 function dibujarCrop(){
   const cc=document.getElementById('crop-cv');
   const ctx=cc.getContext('2d');
+  // MEJORA: renderizado con alta calidad
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
   ctx.clearRect(0,0,cc.width,cc.height);
   ctx.drawImage(cropImg,0,0,cc.width,cc.height);
   if(!pts)return;
@@ -767,7 +901,7 @@ function dibujarCrop(){
   pts.forEach(p=>ctx.lineTo(p.x,p.y));
   ctx.closePath(); ctx.stroke(); ctx.shadowBlur=0;
 
-  // Líneas de guía tercios (regla de tercios)
+  // Líneas de guía tercios
   const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
   const minX=Math.min(...xs),maxX=Math.max(...xs);
   const minY=Math.min(...ys),maxY=Math.max(...ys);
@@ -779,16 +913,15 @@ function dibujarCrop(){
   }
   ctx.setLineDash([]);
 
-  // Esquinas estilo "L" — pequeñas, precisas, sin tapar el recorte
+  // Esquinas estilo "L"
   const cx2=pts.reduce((s,q)=>s+q.x,0)/4, cy2=pts.reduce((s,q)=>s+q.y,0)/4;
   pts.forEach((p,i)=>{
     const act = (i===dragging);
     const dx  = p.x < cx2 ? 1 : -1;
     const dy  = p.y < cy2 ? 1 : -1;
-    const ARM = 18; // longitud del brazo de la L
-    const T   = act ? 3 : 2.5; // grosor
+    const ARM = 18;
+    const T   = act ? 3 : 2.5;
 
-    // Sombra negra para contraste sobre cualquier imagen
     ctx.strokeStyle = 'rgba(0,0,0,0.6)';
     ctx.lineWidth = T + 2;
     ctx.lineCap = 'round';
@@ -796,7 +929,6 @@ function dibujarCrop(){
     ctx.moveTo(p.x + dx*ARM, p.y); ctx.lineTo(p.x, p.y); ctx.lineTo(p.x, p.y + dy*ARM);
     ctx.stroke();
 
-    // Línea de color
     ctx.strokeStyle = act ? '#fbbf24' : '#ffffff';
     ctx.lineWidth   = T;
     ctx.shadowColor = act ? '#fbbf24' : '#3b82f6';
@@ -806,7 +938,6 @@ function dibujarCrop(){
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Punto central diminuto para indicar la esquina exacta
     ctx.beginPath(); ctx.arc(p.x, p.y, act ? 4 : 3, 0, Math.PI*2);
     ctx.fillStyle = act ? '#fbbf24' : '#ffffff';
     ctx.shadowColor = act ? '#fbbf24' : '#60a5fa'; ctx.shadowBlur = 4;
@@ -839,8 +970,9 @@ function encontrarDoc(canvas){
     src=cv.imread(canvas); gray=new cv.Mat(); blur=new cv.Mat(); edge=new cv.Mat();
     contours=new cv.MatVector(); hier=new cv.Mat();
     cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);
-    cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);
-    cv.Canny(blur,edge,50,150);
+    // MEJORA: blur 7×7 para imágenes más grandes → menos falsos bordes
+    cv.GaussianBlur(gray,blur,new cv.Size(7,7),0);
+    cv.Canny(blur,edge,45,140);
     const k=cv.Mat.ones(3,3,cv.CV_8U); cv.dilate(edge,edge,k); k.delete();
     cv.findContours(edge,contours,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
     let best=null, bestA=canvas.width*canvas.height*0.04;
@@ -878,15 +1010,15 @@ function cvPos(e){
   const cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
   return{x:cx*sx,y:cy*sy};
 }
-cropCv.addEventListener('mousedown', e=>{if(!pts)return;const pos=cvPos(e);dragging=pts.findIndex(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<38);if(dragging>=0)e.preventDefault();},{passive:false});
-cropCv.addEventListener('touchstart',e=>{if(!pts)return;const pos=cvPos(e);dragging=pts.findIndex(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<38);if(dragging>=0)e.preventDefault();},{passive:false});
+cropCv.addEventListener('mousedown', e=>{if(!pts)return;const pos=cvPos(e);dragging=pts.findIndex(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<40);if(dragging>=0)e.preventDefault();},{passive:false});
+cropCv.addEventListener('touchstart',e=>{if(!pts)return;const pos=cvPos(e);dragging=pts.findIndex(p=>Math.hypot(p.x-pos.x,p.y-pos.y)<40);if(dragging>=0)e.preventDefault();},{passive:false});
 cropCv.addEventListener('mousemove', e=>{if(dragging<0||!pts)return;e.preventDefault();const pos=cvPos(e);const cc=document.getElementById('crop-cv');pts[dragging]={x:Math.max(0,Math.min(cc.width,pos.x)),y:Math.max(0,Math.min(cc.height,pos.y))};dibujarCrop();mostrarLupa(dragging);},{passive:false});
 cropCv.addEventListener('touchmove', e=>{if(dragging<0||!pts)return;e.preventDefault();const pos=cvPos(e);const cc=document.getElementById('crop-cv');pts[dragging]={x:Math.max(0,Math.min(cc.width,pos.x)),y:Math.max(0,Math.min(cc.height,pos.y))};dibujarCrop();mostrarLupa(dragging);},{passive:false});
 cropCv.addEventListener('mouseup',()=>{dragging=-1;ocultarLupa();});
 cropCv.addEventListener('touchend',()=>{dragging=-1;ocultarLupa();});
 
 // ══════════════════════
-// LUPA DE ZOOM (CORNER LOUPE)
+// LUPA DE ZOOM — MEJORA HD: 5× zoom, 560px canvas, indicador fino
 // ══════════════════════
 function mostrarLupa(idx){
   const cc    = document.getElementById('crop-cv');
@@ -894,31 +1026,31 @@ function mostrarLupa(idx){
   const lc    = document.getElementById('loupe-cv');
   const ctx   = lc.getContext('2d');
 
-  const ZOOM  = 4;     // 4× zoom
-  const LCANV = 320;   // resolución interna del canvas de lupa
-  const LSIZE = 150;   // tamaño visual CSS de la lupa (px)
+  // MEJORA: 5× zoom, canvas 560px para nitidez máxima
+  const ZOOM  = 5;
+  const LCANV = 560;
+  const LSIZE = 180;
 
-  const p = pts[idx];  // coordenadas en el canvas del crop
+  const p = pts[idx];
 
-  // Escalar coordenadas del canvas al tamaño real de la imagen
   const scaleX = cropImg.naturalWidth  / cc.width;
   const scaleY = cropImg.naturalHeight / cc.height;
   const imgX   = p.x * scaleX;
   const imgY   = p.y * scaleY;
 
-  // Región de la imagen ORIGINAL a capturar (sin overlay)
+  // Región de la imagen original a capturar
   const sw = (LCANV / ZOOM) * scaleX;
   const sh = (LCANV / ZOOM) * scaleY;
   const sx = imgX - sw / 2;
   const sy = imgY - sh / 2;
 
-  // Dibujar desde cropImg (imagen limpia, sin el overlay oscuro ni puntos)
+  // MEJORA: renderizado con máxima calidad
   ctx.clearRect(0, 0, LCANV, LCANV);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(cropImg, sx, sy, sw, sh, 0, 0, LCANV, LCANV);
 
-  // Borde de recorte proyectado en la lupa
+  // Proyectar borde de recorte en la lupa
   function toL(pt){
     return {
       x: ((pt.x * scaleX) - sx) / sw * LCANV,
@@ -931,43 +1063,40 @@ function mostrarLupa(idx){
   const lpr  = toL(prev);
   const lnx  = toL(next);
 
-  // Sombra negra para contraste
+  // MEJORA: líneas más delgadas para no tapar el contenido
   ctx.lineCap = 'round';
-  ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(lpr.x, lpr.y); ctx.lineTo(lp.x, lp.y); ctx.lineTo(lnx.x, lnx.y);
   ctx.stroke();
-  // Línea blanca nítida encima
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2.5;
-  ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 8;
+  ctx.lineWidth = 1.5; // MEJORA: más fino (antes 2.5)
+  ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 6;
   ctx.beginPath();
   ctx.moveTo(lpr.x, lpr.y); ctx.lineTo(lp.x, lp.y); ctx.lineTo(lnx.x, lnx.y);
   ctx.stroke(); ctx.shadowBlur = 0;
 
-  // Punto amarillo exacto en la esquina
-  ctx.beginPath(); ctx.arc(lp.x, lp.y, 5, 0, Math.PI*2);
+  // MEJORA: punto de esquina más pequeño (radio 2.5 antes era 5)
+  ctx.beginPath(); ctx.arc(lp.x, lp.y, 2.5, 0, Math.PI*2);
   ctx.fillStyle = '#fbbf24';
-  ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 6;
+  ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 4;
   ctx.fill(); ctx.shadowBlur = 0;
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
 
-  // Cruz de precisión centrada
-  ctx.strokeStyle = 'rgba(251,191,36,0.5)';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([3,3]);
+  // Cruz de precisión más sutil
+  ctx.strokeStyle = 'rgba(251,191,36,0.35)'; // MEJORA: más transparente
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([4,4]);
   ctx.beginPath();
   ctx.moveTo(lp.x, 0); ctx.lineTo(lp.x, LCANV);
   ctx.moveTo(0, lp.y); ctx.lineTo(LCANV, lp.y);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Actualizar tamaño visual de la lupa
   loupe.style.width  = LSIZE + 'px';
   loupe.style.height = LSIZE + 'px';
 
-  // Posicionar en esquina OPUESTA de la pantalla
   const SW  = window.innerWidth;
   const SH  = window.innerHeight;
   const M   = 14;
@@ -989,7 +1118,7 @@ function ocultarLupa(){
 }
 
 // ══════════════════════
-// WARP (perspectiva)
+// WARP (perspectiva) — MEJORA: calidad HD, nitidez, INTER_CUBIC + sharpen
 // ══════════════════════
 async function aplicarRecorte(){
   if(!pts)return;
@@ -1004,14 +1133,25 @@ async function aplicarRecorte(){
     document.querySelectorAll('.fmt-chip').forEach(c=>c.classList.remove('sel'));
     document.querySelector('[data-fmt="pdf"]').classList.add('sel');
     document.getElementById('dl-lbl').textContent='Guardar PDF';
+
     const nombres={doc:'Documento',card:'Tarjeta',wb:'Pizarra',photo:'Foto'};
+
+    // MEJORA: orden de inserción, no por fecha de archivo
+    docInsertOrder++;
+    localStorage.setItem('sd4-order', docInsertOrder);
+
     const doc={
-      id:Date.now(), url:result,
-      name:`${nombres[mode]||'Escaneo'} ${docs.length+1}`,
-      date:new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}),
-      time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+      id: Date.now(),
+      insertOrder: docInsertOrder, // garantiza orden de inserción
+      url: result,
+      name: `${nombres[mode]||'Escaneo'} ${docs.length+1}`,
+      date: new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}),
+      time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
     };
-    docs.unshift(doc); guardarDocs(); actualizarHome();
+    // unshift → más reciente siempre primero (orden de añadido, no de fecha de archivo)
+    docs.unshift(doc);
+    guardarDocs();
+    actualizarHome();
     show('s-result');
   }catch(e){hideLoader();alert('Error al procesar imagen');}
 }
@@ -1022,32 +1162,59 @@ function hacerWarp(){
   const iW=cropImg.naturalWidth, iH=cropImg.naturalHeight;
   const srcC=document.createElement('canvas');
   srcC.width=iW; srcC.height=iH;
-  srcC.getContext('2d').drawImage(cropImg,0,0);
+  const srcCtx=srcC.getContext('2d');
+  srcCtx.imageSmoothingEnabled=true;
+  srcCtx.imageSmoothingQuality='high';
+  srcCtx.drawImage(cropImg,0,0);
+
   if(!window.cvReady||!window.cv){
+    // Fallback sin OpenCV: recorte directo HD
     const xs=sp.map(p=>p.x),ys=sp.map(p=>p.y);
     const x1=Math.min(...xs),y1=Math.min(...ys),x2=Math.max(...xs),y2=Math.max(...ys);
     const out=document.createElement('canvas');
     out.width=x2-x1; out.height=y2-y1;
-    out.getContext('2d').drawImage(srcC,x1,y1,out.width,out.height,0,0,out.width,out.height);
-    return out.toDataURL('image/jpeg',0.97);
+    const outCtx=out.getContext('2d');
+    outCtx.imageSmoothingEnabled=true;
+    outCtx.imageSmoothingQuality='high';
+    outCtx.drawImage(srcC,x1,y1,out.width,out.height,0,0,out.width,out.height);
+    return out.toDataURL('image/jpeg',0.99);
   }
-  let srcM,dstM,srcT,dstT,M;
+
+  let srcM,dstM,srcT,dstT,M,enh,sharp,kernel;
   try{
     const [tl,tr,br,bl]=sp;
     const outW=Math.round(Math.max(Math.hypot(br.x-bl.x,br.y-bl.y),Math.hypot(tr.x-tl.x,tr.y-tl.y)));
     const outH=Math.round(Math.max(Math.hypot(tr.x-br.x,tr.y-br.y),Math.hypot(tl.x-bl.x,tl.y-bl.y)));
-    srcM=cv.imread(srcC); dstM=new cv.Mat();
+    srcM=cv.imread(srcC);
+    dstM=new cv.Mat();
     srcT=cv.matFromArray(4,1,cv.CV_32FC2,[tl.x,tl.y,tr.x,tr.y,br.x,br.y,bl.x,bl.y]);
     dstT=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,outW,0,outW,outH,0,outH]);
     M=cv.getPerspectiveTransform(srcT,dstT);
-    cv.warpPerspective(srcM,dstM,M,new cv.Size(outW,outH),cv.INTER_LINEAR,cv.BORDER_CONSTANT,new cv.Scalar());
-    const enh=new cv.Mat();
-    dstM.convertTo(enh,-1,1.18,10); // contraste + brillo
+
+    // MEJORA: INTER_CUBIC para recorte mucho más nítido (antes INTER_LINEAR)
+    cv.warpPerspective(srcM,dstM,M,new cv.Size(outW,outH),cv.INTER_CUBIC,cv.BORDER_CONSTANT,new cv.Scalar());
+
+    // MEJORA: ajuste de contraste/brillo según modo de escaneo
+    enh=new cv.Mat();
+    const alpha = mode==='wb' ? 1.18 : mode==='card' ? 1.14 : 1.22;
+    const beta  = mode==='wb' ? 14   : mode==='card' ? 5    : 11;
+    dstM.convertTo(enh,-1,alpha,beta);
+
+    // MEJORA: filtro de nitidez (unsharp mask) para texto más nítido
+    const kernelData = [0,-1,0,-1,5,-1,0,-1,0]; // kernel de nitidez estándar
+    kernel=cv.matFromArray(3,3,cv.CV_32F,kernelData);
+    sharp=new cv.Mat();
+    cv.filter2D(enh,sharp,-1,kernel);
+
     const out=document.createElement('canvas');
     out.width=outW; out.height=outH;
-    cv.imshow(out,enh); enh.delete();
-    return out.toDataURL('image/jpeg',0.97);
-  }finally{[srcM,dstM,srcT,dstT,M].forEach(m=>{try{if(m)m.delete();}catch(e){}});}
+    cv.imshow(out,sharp);
+
+    // MEJORA: calidad JPEG 0.99 para imagen final HD
+    return out.toDataURL('image/jpeg',0.99);
+  }finally{
+    [srcM,dstM,srcT,dstT,M,enh,sharp,kernel].forEach(m=>{try{if(m)m.delete();}catch(e){}});
+  }
 }
 
 // ══════════════════════
@@ -1063,18 +1230,19 @@ function onFotoImportada(input){
   const reader = new FileReader();
   reader.onload = e => {
     rawUrl = e.target.result;
+    // Auto-detectar si parece foto general
     mode = 'photo';
+    actualizarModeGrid();
     abrirRecorte();
   };
   reader.readAsDataURL(file);
-  // Reset input para poder volver a importar la misma foto
   input.value = '';
 }
 
 // ══════════════════════
 // MODAL CAMBIAR NOMBRE
 // ══════════════════════
-let pendingExport = null; // {url, fmt}
+let pendingExport = null;
 
 function abrirModalNombre(){
   const doc = docs[0];
@@ -1094,7 +1262,6 @@ async function confirmarGuardado(){
   const nombre = input.value.trim();
   if(!nombre){ input.focus(); return; }
 
-  // Actualizar nombre en docs
   if(docs.length > 0) docs[0].name = nombre;
   guardarDocs();
 
@@ -1122,7 +1289,6 @@ function pickFmt(el){
 async function guardarDoc(){
   const img = document.getElementById('res-img');
   if(!img.src || img.src===window.location.href) return;
-  // Abrir modal para cambiar nombre antes de guardar
   abrirModalNombre();
 }
 
@@ -1131,8 +1297,9 @@ async function exportarPDF(url,name){
   const img=new Image();
   await new Promise(r=>{img.onload=r;img.src=url;});
   const w=img.naturalWidth, h=img.naturalHeight;
+  // MEJORA: calidad JPEG en PDF mejorada
   const pdf=new jsPDF({orientation:h>=w?'portrait':'landscape',unit:'px',format:[w,h]});
-  pdf.addImage(url,'JPEG',0,0,w,h,'','FAST');
+  pdf.addImage(url,'JPEG',0,0,w,h,'','MEDIUM');
   pdf.save(`${name}.pdf`);
 }
 
@@ -1141,11 +1308,16 @@ function exportarImagen(url,fmt,name){
   img.onload=()=>{
     const c=document.createElement('canvas');
     c.width=img.naturalWidth; c.height=img.naturalHeight;
-    c.getContext('2d').drawImage(img,0,0);
+    const ctx=c.getContext('2d');
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality='high';
+    ctx.drawImage(img,0,0);
     const mimes={jpg:'image/jpeg',png:'image/png',webp:'image/webp',bmp:'image/bmp'};
     let out;
-    try{out=c.toDataURL(mimes[fmt]||'image/jpeg',fmt==='jpg'?0.95:undefined);}
-    catch(e){out=c.toDataURL('image/jpeg',0.95);}
+    try{
+      // MEJORA: mayor calidad de exportación
+      out=c.toDataURL(mimes[fmt]||'image/jpeg',fmt==='jpg'?0.98:undefined);
+    }catch(e){out=c.toDataURL('image/jpeg',0.98);}
     descargar(out,`${name}.${fmt}`);
   };
   img.src=url;
@@ -1158,7 +1330,7 @@ function descargar(url,filename){
 }
 
 // ══════════════════════
-// GALERÍA
+// GALERÍA — orden por inserción, no por fecha de archivo
 // ══════════════════════
 function guardarDocs(){try{localStorage.setItem('sd4',JSON.stringify(docs));}catch(e){}}
 
@@ -1168,6 +1340,7 @@ function renderGaleria(){
     body.innerHTML=`<div class="empty"><div class="eico">📂</div><h3>Sin documentos</h3><p>Toca + para escanear</p></div>`;
     return;
   }
+  // Los docs ya están ordenados por inserción (unshift → [0] = más reciente)
   body.innerHTML=`<div class="gal-grid">${docs.map(d=>`
     <div class="gal-card" onclick="verDoc(${d.id})">
       <div class="gal-img"><img src="${d.url}" loading="lazy"></div>
